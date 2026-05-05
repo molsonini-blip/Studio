@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Studio — AI Video Lab</title>
+  <style>
+    :root {
+      --bg: #0e0e0e; --surface: #1a1a1a; --surface2: #252525;
+      --accent: #7c3aed; --accent2: #a855f7;
+      --text: #f0f0f0; --muted: #888; --border: #333;
+      --radius: 8px; --success: #22c55e; --error: #ef4444;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: var(--bg); color: var(--text); font-family: 'Segoe UI', system-ui, sans-serif; }
+    header {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 1rem 2rem; display: flex; align-items: center; gap: 1rem;
+    }
+    header h1 { font-size: 1.4rem; font-weight: 700; color: var(--accent2); letter-spacing: 0.05em; }
+    header span { color: var(--muted); font-size: 0.85rem; }
+    nav { display: flex; gap: 0.5rem; margin-left: auto; }
+    nav button {
+      background: transparent; border: 1px solid var(--border); color: var(--muted);
+      padding: 0.4rem 1rem; border-radius: var(--radius); cursor: pointer; font-size: 0.9rem;
+      transition: all 0.15s;
+    }
+    nav button.active, nav button:hover {
+      background: var(--accent); border-color: var(--accent); color: #fff;
+    }
+    main { max-width: 960px; margin: 2rem auto; padding: 0 1.5rem; }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    h2 { font-size: 1.1rem; margin-bottom: 1.25rem; color: var(--accent2); }
+    .card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 1.5rem; margin-bottom: 1.25rem;
+    }
+    .field { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.82rem; color: var(--muted); margin-bottom: 0.3rem; }
+    input[type=text], input[type=number], select, textarea {
+      width: 100%; background: var(--surface2); border: 1px solid var(--border);
+      color: var(--text); padding: 0.5rem 0.75rem; border-radius: var(--radius);
+      font-size: 0.92rem; outline: none;
+    }
+    input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
+      border-color: var(--accent);
+    }
+    textarea { resize: vertical; min-height: 80px; }
+    .row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .row3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+    button.primary {
+      background: var(--accent); color: #fff; border: none;
+      padding: 0.65rem 1.75rem; border-radius: var(--radius);
+      font-size: 0.95rem; cursor: pointer; font-weight: 600; transition: background 0.15s;
+    }
+    button.primary:hover { background: var(--accent2); }
+    button.primary:disabled { background: var(--surface2); color: var(--muted); cursor: not-allowed; }
+    .status { margin-top: 1rem; font-size: 0.85rem; color: var(--muted); }
+    .status.error { color: var(--error); }
+    .status.success { color: var(--success); }
+    .result-video { margin-top: 1.25rem; }
+    .result-video video { width: 100%; border-radius: var(--radius); background: #000; }
+    input[type=file] {
+      background: var(--surface2); border: 1px dashed var(--border);
+      border-radius: var(--radius); padding: 0.75rem; width: 100%; color: var(--muted);
+      cursor: pointer;
+    }
+    input[type=range] { width: 100%; accent-color: var(--accent); }
+    .checkbox-row { display: flex; align-items: center; gap: 0.5rem; }
+    .checkbox-row input { width: auto; }
+  </style>
+</head>
+<body>
+<header>
+  <h1>Studio</h1>
+  <span>AI Video Lab</span>
+  <nav>
+    <button class="active" onclick="switchTab('videogen', this)">Video Gen</button>
+    <button onclick="switchTab('faceswap', this)">Face Swap</button>
+    <button onclick="switchTab('talkinghead', this)">News Anchor</button>
+  </nav>
+</header>
+
+<main>
+
+  <!-- ── Video Generation ── -->
+  <div class="panel active" id="panel-videogen">
+    <h2>Text-to-Video Generation</h2>
+    <div class="card">
+      <div class="field">
+        <label>Prompt</label>
+        <textarea id="vg-prompt" placeholder="A professional news anchor delivering breaking news in a modern studio..."></textarea>
+      </div>
+      <div class="field">
+        <label>Negative Prompt</label>
+        <input type="text" id="vg-neg" placeholder="blurry, low quality, distorted" />
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Pipeline</label>
+          <select id="vg-pipeline">
+            <option value="animatediff">AnimateDiff</option>
+            <option value="stable_video_diffusion">Stable Video Diffusion</option>
+            <option value="cogvideox">CogVideoX-5B</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Seed (-1 = random)</label>
+          <input type="number" id="vg-seed" value="-1" />
+        </div>
+      </div>
+      <div class="row3">
+        <div class="field">
+          <label>Frames: <span id="vg-frames-val">16</span></label>
+          <input type="range" id="vg-frames" min="4" max="64" value="16"
+            oninput="document.getElementById('vg-frames-val').textContent=this.value" />
+        </div>
+        <div class="field">
+          <label>Steps: <span id="vg-steps-val">25</span></label>
+          <input type="range" id="vg-steps" min="10" max="60" value="25"
+            oninput="document.getElementById('vg-steps-val').textContent=this.value" />
+        </div>
+        <div class="field">
+          <label>Guidance: <span id="vg-guid-val">7.5</span></label>
+          <input type="range" id="vg-guid" min="1" max="20" step="0.5" value="7.5"
+            oninput="document.getElementById('vg-guid-val').textContent=this.value" />
+        </div>
+      </div>
+      <button class="primary" id="vg-btn" onclick="runVideoGen()">Generate Video</button>
+      <div class="status" id="vg-status"></div>
+    </div>
+    <div class="result-video" id="vg-result" style="display:none">
+      <video id="vg-video" controls></video>
+    </div>
+  </div>
+
+  <!-- ── Face Swap ── -->
+  <div class="panel" id="panel-faceswap">
+    <h2>Face Swap</h2>
+    <div class="card">
+      <div class="row">
+        <div class="field">
+          <label>Source Face Image</label>
+          <input type="file" id="fs-source" accept="image/*" />
+        </div>
+        <div class="field">
+          <label>Target Image or Video</label>
+          <input type="file" id="fs-target" accept="image/*,video/*" />
+        </div>
+      </div>
+      <div class="field">
+        <label>Blend Alpha: <span id="fs-alpha-val">0.95</span></label>
+        <input type="range" id="fs-alpha" min="0" max="1" step="0.05" value="0.95"
+          oninput="document.getElementById('fs-alpha-val').textContent=this.value" />
+      </div>
+      <div class="field checkbox-row">
+        <input type="checkbox" id="fs-enhance" checked />
+        <label for="fs-enhance" style="margin:0">Face enhance (GFPGAN)</label>
+      </div>
+      <button class="primary" id="fs-btn" onclick="runFaceSwap()">Swap Face</button>
+      <div class="status" id="fs-status"></div>
+    </div>
+    <div class="result-video" id="fs-result" style="display:none">
+      <video id="fs-video" controls></video>
+    </div>
+  </div>
+
+  <!-- ── Talking Head / News Anchor ── -->
+  <div class="panel" id="panel-talkinghead">
+    <h2>News Anchor Synthesis</h2>
+    <div class="card">
+      <div class="row">
+        <div class="field">
+          <label>Anchor Portrait (Image)</label>
+          <input type="file" id="th-image" accept="image/*" />
+        </div>
+        <div class="field">
+          <label>Driving Audio (WAV / MP3)</label>
+          <input type="file" id="th-audio" accept="audio/*" />
+        </div>
+      </div>
+      <div class="row">
+        <div class="field">
+          <label>Model</label>
+          <select id="th-model">
+            <option value="sadtalker">SadTalker</option>
+            <option value="wav2lip">Wav2Lip</option>
+          </select>
+        </div>
+        <div class="field">
+          <label>Preprocess</label>
+          <select id="th-preprocess">
+            <option value="crop">Crop</option>
+            <option value="resize">Resize</option>
+            <option value="full">Full</option>
+          </select>
+        </div>
+      </div>
+      <div class="field checkbox-row" style="gap:1.5rem">
+        <label class="checkbox-row" style="margin:0">
+          <input type="checkbox" id="th-still" checked />
+          Still mode (anchor look)
+        </label>
+        <label class="checkbox-row" style="margin:0">
+          <input type="checkbox" id="th-enhance" checked />
+          Face enhance
+        </label>
+      </div>
+      <button class="primary" id="th-btn" onclick="runTalkingHead()">Animate Anchor</button>
+      <div class="status" id="th-status"></div>
+    </div>
+    <div class="result-video" id="th-result" style="display:none">
+      <video id="th-video" controls></video>
+    </div>
+  </div>
+
+</main>
+
+<script>
+function switchTab(id, btn) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('nav button').forEach(b => b.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+function setStatus(id, msg, type='') {
+  const el = document.getElementById(id);
+  el.textContent = msg;
+  el.className = 'status ' + type;
+}
+
+// ── Video Generation ────────────────────────────────────────────────────────
+async function runVideoGen() {
+  const btn = document.getElementById('vg-btn');
+  btn.disabled = true;
+  setStatus('vg-status', 'Generating… this may take several minutes on first run.');
+  document.getElementById('vg-result').style.display = 'none';
+
+  const body = {
+    prompt: document.getElementById('vg-prompt').value,
+    negative_prompt: document.getElementById('vg-neg').value,
+    pipeline: document.getElementById('vg-pipeline').value,
+    num_frames: parseInt(document.getElementById('vg-frames').value),
+    num_inference_steps: parseInt(document.getElementById('vg-steps').value),
+    guidance_scale: parseFloat(document.getElementById('vg-guid').value),
+    seed: parseInt(document.getElementById('vg-seed').value),
+    fps: 8, width: 512, height: 512,
+  };
+
+  try {
+    const res = await fetch('/api/video-gen/generate', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body),
+    });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.detail); }
+    const data = await res.json();
+    document.getElementById('vg-video').src = data.output_url;
+    document.getElementById('vg-result').style.display = 'block';
+    setStatus('vg-status', `Done — ${data.frames} frames @ ${data.fps} fps (${data.pipeline_used})`, 'success');
+  } catch(e) {
+    setStatus('vg-status', 'Error: ' + e.message, 'error');
+  } finally { btn.disabled = false; }
+}
+
+// ── Face Swap ────────────────────────────────────────────────────────────────
+async function runFaceSwap() {
+  const btn = document.getElementById('fs-btn');
+  btn.disabled = true;
+  setStatus('fs-status', 'Swapping faces…');
+  document.getElementById('fs-result').style.display = 'none';
+
+  const fd = new FormData();
+  fd.append('source_image', document.getElementById('fs-source').files[0]);
+  fd.append('target_media', document.getElementById('fs-target').files[0]);
+  fd.append('blend_alpha', document.getElementById('fs-alpha').value);
+  fd.append('enhance', document.getElementById('fs-enhance').checked);
+
+  try {
+    const res = await fetch('/api/face-swap/swap', { method: 'POST', body: fd });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.detail); }
+    const data = await res.json();
+    document.getElementById('fs-video').src = data.output_url;
+    document.getElementById('fs-result').style.display = 'block';
+    setStatus('fs-status', `Done — ${data.faces_swapped} face(s) swapped.`, 'success');
+  } catch(e) {
+    setStatus('fs-status', 'Error: ' + e.message, 'error');
+  } finally { btn.disabled = false; }
+}
+
+// ── Talking Head ─────────────────────────────────────────────────────────────
+async function runTalkingHead() {
+  const btn = document.getElementById('th-btn');
+  btn.disabled = true;
+  setStatus('th-status', 'Animating anchor…');
+  document.getElementById('th-result').style.display = 'none';
+
+  const fd = new FormData();
+  fd.append('source_image', document.getElementById('th-image').files[0]);
+  fd.append('audio', document.getElementById('th-audio').files[0]);
+  fd.append('model', document.getElementById('th-model').value);
+  fd.append('still_mode', document.getElementById('th-still').checked);
+  fd.append('preprocess', document.getElementById('th-preprocess').value);
+  fd.append('enhance_face', document.getElementById('th-enhance').checked);
+
+  try {
+    const res = await fetch('/api/talking-head/animate', { method: 'POST', body: fd });
+    if (!res.ok) { const e = await res.json(); throw new Error(e.detail); }
+    const data = await res.json();
+    document.getElementById('th-video').src = data.output_url;
+    document.getElementById('th-result').style.display = 'block';
+    setStatus('th-status', `Done — ${data.duration_seconds.toFixed(1)}s video.`, 'success');
+  } catch(e) {
+    setStatus('th-status', 'Error: ' + e.message, 'error');
+  } finally { btn.disabled = false; }
+}
+</script>
+</body>
+</html>
