@@ -60,6 +60,20 @@ def load_alpaca_dataset(path: Path):
     return Dataset.from_list(formatted)
 
 
+def _setup_wandb(project: str, run_name: str) -> bool:
+    """Initialize W&B if available. Returns True if active."""
+    try:
+        import wandb
+        wandb.init(project=project, name=run_name, config={"framework": "peft-lora"})
+        print(f"W&B dashboard: {wandb.run.get_url()}")
+        return True
+    except ImportError:
+        print("W&B not installed — logging to console only. Install: pip install wandb")
+    except Exception as e:
+        print(f"W&B init failed ({e}) — logging to console only.")
+    return False
+
+
 def train(
     dataset_path: Path,
     output_dir: Path,
@@ -70,6 +84,9 @@ def train(
     lora_r: int = 16,
     lora_alpha: int = 32,
     max_seq_len: int = 1024,
+    wandb_project: str = "studio-llm",
+    wandb_run: str = "",
+    no_wandb: bool = False,
 ):
     _check_gpu()
 
@@ -85,6 +102,11 @@ def train(
 
     output_dir = Path(output_dir)
     output_dir.mkdir(parents=True, exist_ok=True)
+
+    use_wandb = not no_wandb
+    if use_wandb:
+        run_label = wandb_run or Path(dataset_path).stem
+        use_wandb = _setup_wandb(wandb_project, run_label)
 
     print(f"Loading base model: {base_model}")
     tokenizer = AutoTokenizer.from_pretrained(base_model, trust_remote_code=True)
@@ -133,7 +155,7 @@ def train(
         save_strategy="epoch",
         eval_strategy="epoch",
         load_best_model_at_end=True,
-        report_to="none",
+        report_to="wandb" if use_wandb else "none",
         warmup_ratio=0.05,
         lr_scheduler_type="cosine",
     )
@@ -175,6 +197,12 @@ if __name__ == "__main__":
     parser.add_argument("--lr", type=float, default=2e-4)
     parser.add_argument("--lora-r", type=int, default=16)
     parser.add_argument("--max-seq-len", type=int, default=1024)
+    parser.add_argument("--wandb-project", default="studio-llm",
+                        help="W&B project name (default: studio-llm)")
+    parser.add_argument("--wandb-run", default="",
+                        help="W&B run name (default: dataset filename)")
+    parser.add_argument("--no-wandb", action="store_true",
+                        help="Disable W&B logging entirely")
     args = parser.parse_args()
 
     train(
@@ -186,4 +214,7 @@ if __name__ == "__main__":
         lr=args.lr,
         lora_r=args.lora_r,
         max_seq_len=args.max_seq_len,
+        wandb_project=args.wandb_project,
+        wandb_run=args.wandb_run,
+        no_wandb=args.no_wandb,
     )
