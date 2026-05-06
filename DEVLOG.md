@@ -6,6 +6,56 @@ Git commits provide an additional cryptographic timestamp trail.
 
 ---
 
+## 2026-05-06
+
+**Session 2 — News pipeline, server deployment, and service configuration**
+
+Deployed Studio backend to StatsDBServer01 (162.251.146.56, Ubuntu 26.04 LTS, CPU-only Intel Xeon SapphireRapids, 15GB RAM, 99GB disk).
+
+### Work completed
+
+- Connected to remote server via paramiko (password auth); added SSH public key to
+  `/root/.ssh/authorized_keys` for future key-based access
+- Installed system packages: git, curl, wget, build-essential, python3-venv, python3-dev,
+  libgl1, libglib2.0-0, ffmpeg, libsm6, libxext6, libffi-dev
+- Uploaded full Studio project to `/opt/studio/` via SFTP (28 files)
+- Created Python venv at `/opt/studio/venv`; installed all deps with CPU-only torch
+  (torch 2.11.0+cpu, diffusers 0.38.0, fastapi 0.136.1, insightface 0.7.3, trafilatura 2.0.0)
+- Installed Ollama v0.23.1 as a systemd service; pulled `llama3.2:3b` (2GB, CPU mode)
+- Designed and implemented `core/news/` module (4 files):
+  - `models.py`: `RawArticle`, `ProcessedScript`, `CaptionLine` dataclasses
+  - `fetcher.py`: RSS (7 major outlets: AP, Reuters, BBC, NPR, CBS, ABC, USA Today),
+    NewsAPI.org, and GNews sources; `trafilatura` full-text extraction; combined
+    `fetch_articles()` with URL deduplication and date sort; API keys via env vars
+  - `processor.py`: Ollama/llama3.2:3b LLM pipeline — strips political bias, opinion,
+    loaded language, attribution framing; rewrites as short declarative fact-only
+    sentences at 7th grade reading level; temperature=0.1 for deterministic output;
+    JSON-structured prompt with strict editorial rules; fallback on parse failure
+  - `formatter.py`: splits into broadcast sentences; wraps to 42-char SRT lines timed
+    at 130 wpm anchor pace; generates full SRT caption string
+- Implemented `web/routers/news.py` with three endpoints:
+  - `GET /api/news/headlines` — fetch from all sources, optional keyword/category filter
+  - `POST /api/news/process` — fetch single URL, bias-filter, return broadcast script + SRT
+  - `POST /api/news/process-batch` — batch fetch + process top headlines
+- Wired news router into `web/main.py`; added `news:` section to `config/settings.yaml`
+- Fixed `parents[3]` → `parents[2]` config path bug across all `core/` modules
+- Created `/etc/systemd/system/studio.service` (uvicorn, 2 workers, auto-restart on failure)
+- Created `/opt/studio/.env` for NEWSAPI_KEY and GNEWS_KEY (RSS works with no keys)
+- Service confirmed active; `/health` → `{"status":"ok"}` and `/api/news/headlines` returning live headlines
+
+### Design decisions
+
+- `llama3.2:3b` chosen for CPU server — 2GB footprint, fast enough for text processing
+- Strict LLM prompt with temperature=0.1 ensures deterministic, fact-only rewrites
+- RSS feeds require no API keys — pipeline is fully functional without any credentials;
+  NewsAPI and GNews are additive via `.env` for broader coverage
+- SRT timing derived from word count at 130 wpm (broadcast anchor delivery pace)
+- 42 chars/line follows broadcast captioning standard (FCC compliant)
+- Video generation pipelines deployed but will run slowly without GPU — flagged for
+  future hardware upgrade if video generation at scale is required
+
+---
+
 ## 2026-05-05
 
 **Session 1 — Project scaffolding and core pipeline design**

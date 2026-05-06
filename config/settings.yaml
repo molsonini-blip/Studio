@@ -60,6 +60,25 @@ web:
     - "http://localhost:8000"
   max_upload_mb: 512
 
+# ── News Pipeline ─────────────────────────────────────────────────────────────
+news:
+  ollama_url: "http://localhost:11434/api/generate"
+  ollama_model: "llama3.2:3b"
+  max_articles: 20
+  words_per_minute: 130        # anchor delivery pace for SRT timing
+  max_caption_chars: 42        # broadcast standard chars per caption line
+  # API keys loaded from environment variables:
+  #   NEWSAPI_KEY — newsapi.org
+  #   GNEWS_KEY   — gnews.io
+  rss_feeds:
+    AP News:   "https://feeds.apnews.com/rss/apf-topnews"
+    Reuters:   "https://feeds.reuters.com/reuters/topNews"
+    BBC:       "https://feeds.bbci.co.uk/news/rss.xml"
+    NPR:       "https://feeds.npr.org/1001/rss.xml"
+    CBS News:  "https://www.cbsnews.com/latest/rss/main"
+    ABC News:  "https://feeds.abcnews.com/abcnews/topstories"
+    USA Today: "https://rssfeeds.usatoday.com/usatoday-NewsTopStories"
+
 # ── Desktop App ───────────────────────────────────────────────────────────────
 desktop:
   theme: dark

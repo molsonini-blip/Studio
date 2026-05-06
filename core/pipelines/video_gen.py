@@ -12,7 +12,7 @@ from core.pipelines.base import BasePipeline
 
 
 def _cfg() -> dict:
-    p = Path(__file__).resolve().parents[3] / "config" / "settings.yaml"
+    p = Path(__file__).resolve().parents[2] / "config" / "settings.yaml"
     with open(p) as f:
         return yaml.safe_load(f)["video_generation"]
 

@@ -8,7 +8,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 
-from web.routers import face_swap, talking_head, video_gen
+from web.routers import face_swap, news, talking_head, video_gen
 
 _cfg_path = Path(__file__).resolve().parents[1] / "config" / "settings.yaml"
 with open(_cfg_path) as _f:
@@ -30,6 +30,7 @@ app.add_middleware(
 app.include_router(video_gen.router, prefix="/api/video-gen", tags=["Video Generation"])
 app.include_router(face_swap.router, prefix="/api/face-swap", tags=["Face Swap"])
 app.include_router(talking_head.router, prefix="/api/talking-head", tags=["Talking Head"])
+app.include_router(news.router, prefix="/api/news", tags=["News"])
 
 _static_dir = Path(__file__).parent / "static"
 app.mount("/static", StaticFiles(directory=str(_static_dir)), name="static")
