@@ -56,6 +56,68 @@ Deployed Studio backend to StatsDBServer01 (162.251.146.56, Ubuntu 26.04 LTS, CP
 
 ---
 
+## 2026-05-06 (Session 3)
+
+**Session 3 — Training data pipeline: archive.org scraper, transcriber, dataset preparer**
+
+Designed and implemented the complete training data collection pipeline for both
+LLM fine-tuning (LoRA) and talking head model fine-tuning.
+
+### Work completed
+
+- Designed and implemented `core/training/` module (4 files):
+  - `scraper.py`: Internet Archive search + download pipeline
+    - `search_archive()`: multi-pass strategy targeting tvnews/tvarchive collections
+      using `collection:` prefix queries; defers duration filtering post-download since
+      the IA search API omits duration for TV items; handles 401/403 access-restricted
+      items gracefully by skipping them
+    - `download_clip()`: uses `ia.get_item()` + `item.download()` directly (yt-dlp fails
+      on archive.org TV items with "No video formats found"); resolves yt-dlp/ffmpeg
+      binaries via `_bin()` helper that checks PATH then venv/bin; extracts audio to
+      16kHz mono WAV via ffmpeg; measures actual duration via ffprobe post-download
+    - `DownloadedClip` dataclass; `collect_dataset()` orchestrator with polite 1s delay
+  - `transcriber.py`: SRT caption parser + faster-whisper CPU transcription
+    - Prefers existing captions; falls back to Whisper int8 quantized (CPU-optimized)
+    - `transcribe_all()` batch processor
+  - `preparer.py`: cleans transcripts; splits into 150-word segments; builds Alpaca/
+    ShareGPT format LLM dataset JSON and talking head manifest (video+audio+transcript)
+  - `face_extractor.py`: OpenCV Haar cascade anchor frame extraction; single-face filter;
+    `frames_index.json` manifest
+
+- Designed and implemented training scripts:
+  - `scripts/training/train_llm.py`: LoRA fine-tune via PEFT on Alpaca dataset;
+    GPU-required check with cloud rental suggestions; saves adapter + Modelfile for
+    `ollama create`
+  - `scripts/training/train_talking_head.py`: FOMM and SadTalker fine-tune paths;
+    GPU-required check; clones First Order Motion Model repo on first run
+  - `scripts/training/collect_data.py`: 5-step orchestration (download → transcribe →
+    LLM dataset → TH manifest → face frames); full CLI argument set
+
+- Debugged archive.org scraper through several iterations:
+  - `num_found` → `params={"rows": N}` (API change in internetarchive v5)
+  - Collection filter AND query returning 0 results → switched to prefix queries
+  - Duration filtering too aggressive (all TV episodes are 30-60 min) → raised default
+    from 300s to 7200s; defer filtering to download time
+  - `ia.download()` passing kwargs to `get_item()` → use `item_obj.download()` directly
+  - Major network items (FOXNEWS, CBS) are 401/403 restricted → skip in download;
+    search returns public-domain items (sept_11_tv_archive, community archives)
+  - Confirmed end-to-end: 3 clips downloaded successfully on server with audio extracted
+
+- Uploaded all training code to StatsDBServer01 `/opt/studio/` via SFTP
+
+### Design decisions
+
+- LLM fine-tuning (train_llm.py) and talking head fine-tuning (train_talking_head.py)
+  both require GPU — server is CPU-only; scripts exit gracefully with instructions
+  pointing to cloud GPU rental (~$0.39/hr RunPod A10G)
+- archive.org TV episodes are full 30-60 min broadcasts; `preparer.py` segments them
+  into 150-word training examples — no need to find pre-segmented clips
+- faster-whisper with int8 quantization is the CPU-viable transcription option;
+  full Whisper would be prohibitively slow on the server
+- SRT captions preferred over Whisper when available (ground truth vs. ASR errors)
+
+---
+
 ## 2026-05-05
 
 **Session 1 — Project scaffolding and core pipeline design**

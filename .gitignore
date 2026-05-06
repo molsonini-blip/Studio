@@ -16,8 +16,8 @@ venv/
 env/
 
 # Model weights (large binaries — track separately)
-models/
-!models/.gitkeep
+/models/
+!/models/.gitkeep
 
 # Generated outputs
 outputs/
