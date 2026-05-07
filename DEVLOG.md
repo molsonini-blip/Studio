@@ -6,6 +6,60 @@ Git commits provide an additional cryptographic timestamp trail.
 
 ---
 
+## 2026-05-06 (Session 4)
+
+**Session 4 — Anchor roster, portrait generator, ElevenLabs voices**
+
+Designed and built the full 12-anchor news talent roster and associated tooling.
+
+### Work completed
+
+- Designed 12-anchor roster with full diversity across gender, ethnicity (Black,
+  Hispanic, White, South Asian, East Asian, Middle Eastern, mixed race), and age (24–48)
+- Each anchor has distinct on-air personality: professional with light-hearted delivery,
+  ranging from Marcus Webb's dry wit to Sofia Okafor's Gen-Z energy
+- Built `data/anchors/roster.json`: single source of truth for all anchor metadata
+  (portrait SD prompt, ElevenLabs voice design params, lower-third colors, voice_id)
+- Built `scripts/anchors/generate_portraits.py`: Stable Diffusion (Realistic Vision)
+  headshot generator; 4 candidates per anchor; --pick to select final; --status overview
+- Built `scripts/anchors/setup_voices.py`: ElevenLabs Voice Design API integration;
+  fixed endpoint (API changed from /voice-generation/* to /text-to-voice/*);
+  creates unique synthetic voice per anchor from descriptors; saves voice_id to roster.json
+- Built `scripts/anchors/preview_anchor.py`: full end-to-end test clip renderer
+  (TTS → SadTalker lip-sync → ffmpeg lower-third overlay)
+- Created all 12 ElevenLabs voices; generated and reviewed preview MP3s — all approved
+- Set up RunPod GPU rental reminder for May 15th via scheduled remote agent
+
+### Anchor roster
+
+| Anchor | Ethnicity | Age | Voice ID |
+|---|---|---|---|
+| Marcus Webb | Black/M | 42 | M48xFCmxS3NPBQYh5ULb |
+| Dana Reyes | Hispanic/F | 36 | U4dpEoz08OyoatMMC0Rp |
+| James Callahan | White/M | 48 | EdNMI9YSQkbdy182AsTS |
+| Priya Nair | South Asian/F | 33 | rMDpXFllvlS6Mz0cMkc7 |
+| Mei-Lin Zhou | East Asian/F | 39 | ePnlCBcHmcSZdTTV7pgx |
+| Tyler Brooks | Mixed Black/White/M | 28 | BK8VtqB5W00pBkNngDib |
+| Sofia Okafor | Mixed Nigerian/Italian/F | 25 | tGeBI95c1e4WuYjDnfZ7 |
+| Carlos Mendez | Hispanic/M | 44 | EMmpMwvaMpq9krsNmudR |
+| Aisha Thompson | Black/F | 29 | S9JWTyUOPQLlaPCvgcBF |
+| Kevin Park | East Asian/M | 35 | 6Oy82xehxlf8lTai0e2D |
+| Rachel Torres | White/F | 24 | 3BcqRuArO44AU8TdSuYa |
+| Layla Hassan | Middle Eastern/F | 34 | 9iwoMQHIipOzhwuhtndH |
+
+### Pending (waiting on GPU — RunPod May 15th)
+- Portrait generation (Stable Diffusion, GPU recommended)
+- End-to-end preview clip rendering (SadTalker requires GPU)
+
+### Design decisions
+- ElevenLabs Creator plan ($22/mo): 30 voice slots, 100K chars/month — sufficient
+  for all 12 anchors with regular TTS use
+- Voice Design API generates unique synthetic voices from text descriptors — no
+  voice cloning samples needed, no real person's voice used
+- Portraits will be fully synthetic (SD Realistic Vision) — no real person's likeness
+
+---
+
 ## 2026-05-06
 
 **Session 2 — News pipeline, server deployment, and service configuration**
