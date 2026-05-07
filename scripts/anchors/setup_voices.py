@@ -87,38 +87,49 @@ def create_voice(anchor: dict, api_key: str) -> str | None:
     vd = anchor["voice_design"]
     name = f"Studio_{anchor['id']}"
 
-    # Voice Design: generate a voice from text descriptors
-    payload = {
-        "voice_description": (
-            f"{vd['gender']}, {vd['age'].replace('_', ' ')}, {vd['accent']} accent. "
-            f"{vd['tone']}. {vd['description']}"
-        ),
-        "text": PREVIEW_SCRIPTS.get(anchor["id"], f"Hello, I am {anchor['name']}."),
-    }
+    # Text must be >=100 chars for the preview API
+    script = PREVIEW_SCRIPTS.get(anchor["id"], f"Hello, I am {anchor['name']}.")
+    while len(script) < 100:
+        script += " Stay with us for more coverage throughout the evening."
 
+    description = (
+        f"{vd['gender']}, {vd['age'].replace('_', ' ')}, {vd['accent']} accent. "
+        f"{vd['tone']}. {vd['description']}"
+    )
+
+    # Step 1: generate preview — returns generated_voice_id + audio
     print(f"  Designing voice for {anchor['name']}...")
     resp = requests.post(
-        f"{ELEVENLABS_BASE}/voice-generation/generate-voice",
+        f"{ELEVENLABS_BASE}/text-to-voice/create-previews",
         headers=headers(api_key),
-        json=payload,
+        json={"voice_description": description, "text": script},
         timeout=60,
     )
 
     if resp.status_code != 200:
-        print(f"  [error] Voice design failed: {resp.status_code} {resp.text[:200]}")
+        print(f"  [error] Voice preview failed: {resp.status_code} {resp.text[:200]}")
         return None
 
-    data = resp.json()
-    generated_voice_id = data.get("voice_id") or data.get("generated_voice_id")
+    previews = resp.json().get("previews", [])
+    if not previews:
+        print(f"  [error] No previews returned: {resp.json()}")
+        return None
+
+    generated_voice_id = previews[0].get("generated_voice_id")
     if not generated_voice_id:
-        print(f"  [error] No voice_id in response: {data}")
+        print(f"  [error] No generated_voice_id in preview: {previews[0]}")
         return None
 
-    # Save the generated voice to the user's library
+    # Step 2: save the preview as a permanent voice in the library
     save_resp = requests.post(
-        f"{ELEVENLABS_BASE}/voice-generation/create-voice",
+        f"{ELEVENLABS_BASE}/text-to-voice/create-voice-from-preview",
         headers=headers(api_key),
-        json={"voice_name": name, "generated_voice_id": generated_voice_id},
+        json={
+            "voice_name": name,
+            "voice_description": description,
+            "generated_voice_id": generated_voice_id,
+            "labels": {"anchor": anchor["name"], "project": "studio"},
+        },
         timeout=30,
     )
 
@@ -127,7 +138,7 @@ def create_voice(anchor: dict, api_key: str) -> str | None:
         return None
 
     voice_id = save_resp.json().get("voice_id")
-    print(f"  Created voice: {name}  id={voice_id}")
+    print(f"  Created: {name}  id={voice_id}")
     return voice_id
 
 

@@ -5,9 +5,13 @@
     "gender": "male",
     "ethnicity": "Black",
     "age": 42,
-    "personality": "Authoritative lead anchor — dry wit, lands a one-liner without breaking stride",
+    "personality": "Authoritative lead anchor \u00e2\u20ac\u201d dry wit, lands a one-liner without breaking stride",
     "delivery": "measured, confident, occasionally deadpan",
-    "topics": ["breaking news", "politics", "economy"],
+    "topics": [
+      "breaking news",
+      "politics",
+      "economy"
+    ],
     "portrait_prompt": "professional news anchor headshot, Black man, early 40s, short natural hair, clean-shaven, navy suit white shirt, studio lighting, neutral grey background, sharp focus, photorealistic, confident composed expression, broadcast television",
     "voice_design": {
       "gender": "male",
@@ -16,7 +20,7 @@
       "tone": "authoritative and warm",
       "description": "Deep, resonant voice. Measured pace. Occasionally dry and understated."
     },
-    "elevenlabs_voice_id": null,
+    "elevenlabs_voice_id": "M48xFCmxS3NPBQYh5ULb",
     "lower_third": {
       "name": "Marcus Webb",
       "title": "Lead Anchor",
@@ -29,9 +33,13 @@
     "gender": "female",
     "ethnicity": "Hispanic",
     "age": 36,
-    "personality": "Sharp and warm — smiles through tough stories, keeps it human",
+    "personality": "Sharp and warm \u00e2\u20ac\u201d smiles through tough stories, keeps it human",
     "delivery": "warm, energetic, quick wit, genuine",
-    "topics": ["general news", "community", "human interest"],
+    "topics": [
+      "general news",
+      "community",
+      "human interest"
+    ],
     "portrait_prompt": "professional news anchor headshot, Hispanic woman, mid 30s, dark wavy hair shoulder length, red blazer, studio lighting, neutral grey background, sharp focus, photorealistic, warm confident smile, broadcast television",
     "voice_design": {
       "gender": "female",
@@ -40,7 +48,7 @@
       "tone": "warm and professional with light energy",
       "description": "Clear, bright voice. Natural warmth. Fast when excited, steady on serious stories."
     },
-    "elevenlabs_voice_id": null,
+    "elevenlabs_voice_id": "U4dpEoz08OyoatMMC0Rp",
     "lower_third": {
       "name": "Dana Reyes",
       "title": "News Anchor",
@@ -53,9 +61,13 @@
     "gender": "male",
     "ethnicity": "White",
     "age": 48,
-    "personality": "Veteran anchor — reliable, throws in the occasional dad joke with zero shame",
+    "personality": "Veteran anchor \u00e2\u20ac\u201d reliable, throws in the occasional dad joke with zero shame",
     "delivery": "classic broadcast, deliberate, self-deprecating humor",
-    "topics": ["general news", "politics", "economy"],
+    "topics": [
+      "general news",
+      "politics",
+      "economy"
+    ],
     "portrait_prompt": "professional news anchor headshot, White man, late 40s, silver-streaked brown hair, slight stubble, charcoal suit blue tie, studio lighting, neutral grey background, sharp focus, photorealistic, trustworthy expression, broadcast television",
     "voice_design": {
       "gender": "male",
@@ -64,7 +76,7 @@
       "tone": "classic broadcast baritone, steady and trustworthy",
       "description": "Rich baritone. Old-school broadcast polish. Warmth underneath the professionalism."
     },
-    "elevenlabs_voice_id": null,
+    "elevenlabs_voice_id": "EdNMI9YSQkbdy182AsTS",
     "lower_third": {
       "name": "James Callahan",
       "title": "Senior Anchor",
@@ -77,9 +89,13 @@
     "gender": "female",
     "ethnicity": "South Asian",
     "age": 33,
-    "personality": "Precise delivery — light sarcasm, raises an eyebrow at absurd stories",
+    "personality": "Precise delivery \u00e2\u20ac\u201d light sarcasm, raises an eyebrow at absurd stories",
     "delivery": "crisp, articulate, dry humor, sharp",
-    "topics": ["general news", "tech", "global affairs"],
+    "topics": [
+      "general news",
+      "tech",
+      "global affairs"
+    ],
     "portrait_prompt": "professional news anchor headshot, South Asian Indian woman, early 30s, dark straight hair, emerald green blazer, studio lighting, neutral grey background, sharp focus, photorealistic, intelligent composed expression, broadcast television",
     "voice_design": {
       "gender": "female",
@@ -88,7 +104,7 @@
       "tone": "crisp and intelligent, slight dry edge",
       "description": "Clear and articulate. Controlled pace. Subtle wit in the delivery."
     },
-    "elevenlabs_voice_id": null,
+    "elevenlabs_voice_id": "rMDpXFllvlS6Mz0cMkc7",
     "lower_third": {
       "name": "Priya Nair",
       "title": "News Anchor",
@@ -101,9 +117,13 @@
     "gender": "female",
     "ethnicity": "East Asian",
     "age": 39,
-    "personality": "Cool and composed — deadpan humor, the audience never sees it coming",
+    "personality": "Cool and composed \u00e2\u20ac\u201d deadpan humor, the audience never sees it coming",
     "delivery": "poised, deliberate, unexpected dry wit",
-    "topics": ["general news", "international", "economy"],
+    "topics": [
+      "general news",
+      "international",
+      "economy"
+    ],
     "portrait_prompt": "professional news anchor headshot, East Asian Chinese woman, late 30s, straight black hair bob cut, burgundy blazer, studio lighting, neutral grey background, sharp focus, photorealistic, calm authoritative expression, broadcast television",
     "voice_design": {
       "gender": "female",
@@ -112,7 +132,7 @@
       "tone": "smooth and composed, steady cadence",
       "description": "Calm, measured delivery. Even tone. Deadpan timing that catches you off guard."
     },
-    "elevenlabs_voice_id": null,
+    "elevenlabs_voice_id": "ePnlCBcHmcSZdTTV7pgx",
     "lower_third": {
       "name": "Mei-Lin Zhou",
       "title": "News Anchor",
@@ -125,9 +145,14 @@
     "gender": "male",
     "ethnicity": "Mixed (Black/White)",
     "age": 28,
-    "personality": "Social topics specialist — relatable, speaks fluent internet without being cringe",
+    "personality": "Social topics specialist \u00e2\u20ac\u201d relatable, speaks fluent internet without being cringe",
     "delivery": "conversational, quick, culturally aware, light energy",
-    "topics": ["social media", "culture", "youth issues", "trending"],
+    "topics": [
+      "social media",
+      "culture",
+      "youth issues",
+      "trending"
+    ],
     "portrait_prompt": "professional news anchor headshot, mixed race Black White man, late 20s, short fade haircut, medium complexion, cobalt blue suit, studio lighting, neutral grey background, sharp focus, photorealistic, approachable confident expression, broadcast television",
     "voice_design": {
       "gender": "male",
@@ -136,7 +161,7 @@
       "tone": "casual and confident, modern delivery",
       "description": "Smooth and conversational. Natural rhythm. Young but grounded."
     },
-    "elevenlabs_voice_id": null,
+    "elevenlabs_voice_id": "BK8VtqB5W00pBkNngDib",
     "lower_third": {
       "name": "Tyler Brooks",
       "title": "News Anchor",
@@ -149,9 +174,14 @@
     "gender": "female",
     "ethnicity": "Mixed (Nigerian/Italian)",
     "age": 25,
-    "personality": "Youngest anchor — Gen-Z energy, keeps trending and culture stories grounded",
+    "personality": "Youngest anchor \u00e2\u20ac\u201d Gen-Z energy, keeps trending and culture stories grounded",
     "delivery": "upbeat, sharp, culturally fluent, genuine",
-    "topics": ["social trends", "culture", "youth", "viral news"],
+    "topics": [
+      "social trends",
+      "culture",
+      "youth",
+      "viral news"
+    ],
     "portrait_prompt": "professional news anchor headshot, mixed race Nigerian Italian woman, mid 20s, natural curly hair, warm brown complexion, mustard yellow blazer, studio lighting, neutral grey background, sharp focus, photorealistic, bright engaged expression, broadcast television",
     "voice_design": {
       "gender": "female",
@@ -160,7 +190,7 @@
       "tone": "bright and energetic, naturally expressive",
       "description": "Light and bright. Fast when animated. Genuine warmth in every line."
     },
-    "elevenlabs_voice_id": null,
+    "elevenlabs_voice_id": "tGeBI95c1e4WuYjDnfZ7",
     "lower_third": {
       "name": "Sofia Okafor",
       "title": "News Anchor",
@@ -173,9 +203,14 @@
     "gender": "male",
     "ethnicity": "Hispanic",
     "age": 44,
-    "personality": "Community-focused — warm gravitas, natural storyteller, subtle charm",
+    "personality": "Community-focused \u00e2\u20ac\u201d warm gravitas, natural storyteller, subtle charm",
     "delivery": "warm, grounded, storytelling cadence, genuine gravitas",
-    "topics": ["community news", "immigration", "local stories", "general news"],
+    "topics": [
+      "community news",
+      "immigration",
+      "local stories",
+      "general news"
+    ],
     "portrait_prompt": "professional news anchor headshot, Hispanic Latino man, mid 40s, dark hair slight grey temples, well-groomed beard, dark grey suit, studio lighting, neutral grey background, sharp focus, photorealistic, warm trustworthy expression, broadcast television",
     "voice_design": {
       "gender": "male",
@@ -184,7 +219,7 @@
       "tone": "warm and grounded, storytelling quality",
       "description": "Rich, warm voice. Unhurried delivery. Natural storytelling rhythm."
     },
-    "elevenlabs_voice_id": null,
+    "elevenlabs_voice_id": "EMmpMwvaMpq9krsNmudR",
     "lower_third": {
       "name": "Carlos Mendez",
       "title": "News Anchor",
@@ -197,9 +232,14 @@
     "gender": "female",
     "ethnicity": "Black",
     "age": 29,
-    "personality": "Fast and sharp — high energy, pop culture fluent, quick wit",
+    "personality": "Fast and sharp \u00e2\u20ac\u201d high energy, pop culture fluent, quick wit",
     "delivery": "energetic, fast, punchy, culturally sharp",
-    "topics": ["breaking news", "culture", "trending", "general news"],
+    "topics": [
+      "breaking news",
+      "culture",
+      "trending",
+      "general news"
+    ],
     "portrait_prompt": "professional news anchor headshot, Black woman, late 20s, natural hair updo, deep complexion, coral blazer, studio lighting, neutral grey background, sharp focus, photorealistic, dynamic confident expression, broadcast television",
     "voice_design": {
       "gender": "female",
@@ -208,7 +248,7 @@
       "tone": "energetic and sharp, quick delivery",
       "description": "High energy. Punchy and precise. Pops on hard words. Commands attention."
     },
-    "elevenlabs_voice_id": null,
+    "elevenlabs_voice_id": "S9JWTyUOPQLlaPCvgcBF",
     "lower_third": {
       "name": "Aisha Thompson",
       "title": "News Anchor",
@@ -221,9 +261,14 @@
     "gender": "male",
     "ethnicity": "East Asian",
     "age": 35,
-    "personality": "Tech and data anchor — quick mind, makes stats feel conversational",
+    "personality": "Tech and data anchor \u00e2\u20ac\u201d quick mind, makes stats feel conversational",
     "delivery": "precise, analytical, approachable, light humor on absurd stats",
-    "topics": ["tech", "data", "science", "economy"],
+    "topics": [
+      "tech",
+      "data",
+      "science",
+      "economy"
+    ],
     "portrait_prompt": "professional news anchor headshot, East Asian Korean man, mid 30s, neat side-parted black hair, slim dark suit light blue shirt, studio lighting, neutral grey background, sharp focus, photorealistic, sharp intelligent expression, broadcast television",
     "voice_design": {
       "gender": "male",
@@ -232,7 +277,7 @@
       "tone": "clear and precise, confident, slightly analytical",
       "description": "Crisp and clear. Quick with numbers. Casual confidence underneath the precision."
     },
-    "elevenlabs_voice_id": null,
+    "elevenlabs_voice_id": "6Oy82xehxlf8lTai0e2D",
     "lower_third": {
       "name": "Kevin Park",
       "title": "News Anchor",
@@ -245,9 +290,14 @@
     "gender": "female",
     "ethnicity": "White",
     "age": 24,
-    "personality": "Youngest female anchor — upbeat, social media native, not afraid to laugh at herself",
+    "personality": "Youngest female anchor \u00e2\u20ac\u201d upbeat, social media native, not afraid to laugh at herself",
     "delivery": "bubbly but grounded, self-aware, quick on social topics",
-    "topics": ["social media", "lifestyle", "trending", "youth culture"],
+    "topics": [
+      "social media",
+      "lifestyle",
+      "trending",
+      "youth culture"
+    ],
     "portrait_prompt": "professional news anchor headshot, White woman, early 20s, blonde shoulder length hair, light complexion, pastel pink blazer, studio lighting, neutral grey background, sharp focus, photorealistic, friendly approachable smile, broadcast television",
     "voice_design": {
       "gender": "female",
@@ -256,7 +306,7 @@
       "tone": "bright and friendly, natural and upbeat",
       "description": "Light and friendly. Quick laugh in the voice. Genuine and unpolished in the best way."
     },
-    "elevenlabs_voice_id": null,
+    "elevenlabs_voice_id": "3BcqRuArO44AU8TdSuYa",
     "lower_third": {
       "name": "Rachel Torres",
       "title": "News Anchor",
@@ -269,9 +319,14 @@
     "gender": "female",
     "ethnicity": "Middle Eastern",
     "age": 34,
-    "personality": "Measured and thoughtful — brings warmth to hard international stories",
+    "personality": "Measured and thoughtful \u00e2\u20ac\u201d brings warmth to hard international stories",
     "delivery": "deliberate, empathetic, clear, poised under pressure",
-    "topics": ["international news", "global affairs", "conflict", "general news"],
+    "topics": [
+      "international news",
+      "global affairs",
+      "conflict",
+      "general news"
+    ],
     "portrait_prompt": "professional news anchor headshot, Middle Eastern Egyptian American woman, mid 30s, dark straight hair, olive complexion, deep teal blazer, studio lighting, neutral grey background, sharp focus, photorealistic, calm empathetic expression, broadcast television",
     "voice_design": {
       "gender": "female",
@@ -280,7 +335,7 @@
       "tone": "calm and measured, genuine empathy",
       "description": "Smooth and deliberate. Carries weight without heaviness. Warmth even on difficult stories."
     },
-    "elevenlabs_voice_id": null,
+    "elevenlabs_voice_id": "9iwoMQHIipOzhwuhtndH",
     "lower_third": {
       "name": "Layla Hassan",
       "title": "News Anchor",
