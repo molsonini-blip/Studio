@@ -60,30 +60,80 @@ def download_face_swap() -> None:
 # ── SadTalker ─────────────────────────────────────────────────────────────────
 
 def download_sadtalker() -> None:
-    print("\n[SadTalker] Downloading checkpoints from HuggingFace…")
     dest = MODELS / "sadtalker"
-    dest.mkdir(parents=True, exist_ok=True)
 
-    files = [
-        ("vinthony/SadTalker", "checkpoints/SadTalker_V0.0.2_256.safetensors"),
-        ("vinthony/SadTalker", "checkpoints/mapping_00109-model.pth.tar"),
-        ("vinthony/SadTalker", "checkpoints/mapping_00229-model.pth.tar"),
-        ("vinthony/SadTalker", "gfpgan/weights/detection_Resnet50_Final.pth"),
-        ("vinthony/SadTalker", "gfpgan/weights/parsing_parsenet.pth"),
+    # Clone the repo first (gets inference.py and the correct directory layout)
+    if not (dest / "inference.py").exists():
+        print("\n[SadTalker] Cloning SadTalker repo…")
+        os.system(f'git clone --depth 1 https://github.com/OpenTalker/SadTalker.git "{dest}"')
+    else:
+        print("\n[SadTalker] Repo already cloned.")
+
+    checkpoints_dir = dest / "checkpoints"
+    checkpoints_dir.mkdir(parents=True, exist_ok=True)
+
+    # Individual model files — vinthony/SadTalker HF repo (flat layout, no longer bundled)
+    print("[SadTalker] Downloading model checkpoints from HuggingFace…")
+    checkpoint_files = [
+        "auido2exp_00300-model.pth",
+        "auido2pose_00140-model.pth",
+        "epoch_20.pth",
+        "facevid2vid_00189-model.pth.tar",
+        "mapping_00109-model.pth.tar",
+        "mapping_00229-model.pth.tar",
+        "shape_predictor_68_face_landmarks.dat",
+        "wav2lip.pth",
     ]
-    for repo_id, filename in files:
-        out = dest / Path(filename).name
+    for filename in checkpoint_files:
+        out = checkpoints_dir / filename
         if out.exists():
-            print(f"  [skip] {out.name}")
+            print(f"  [skip] {filename}")
             continue
         print(f"  {filename}")
-        hf_hub_download(repo_id=repo_id, filename=filename, local_dir=str(dest))
+        hf_hub_download(repo_id="vinthony/SadTalker", filename=filename, local_dir=str(checkpoints_dir))
 
-    # Clone inference script if not present
-    sadtalker_script = dest / "inference.py"
-    if not sadtalker_script.exists():
-        print("  Cloning SadTalker repo for inference scripts…")
-        os.system(f'git clone --depth 1 https://github.com/OpenTalker/SadTalker.git "{dest}"')
+    # BFM Fitting directory (3D morphable model data)
+    print("[SadTalker] Downloading BFM Fitting data…")
+    bfm_dir = checkpoints_dir / "BFM_Fitting"
+    bfm_dir.mkdir(exist_ok=True)
+    bfm_files = [
+        "BFM_Fitting/01_MorphableModel.mat",
+        "BFM_Fitting/BFM09_model_info.mat",
+        "BFM_Fitting/BFM_exp_idx.mat",
+        "BFM_Fitting/BFM_front_idx.mat",
+        "BFM_Fitting/Exp_Pca.bin",
+        "BFM_Fitting/facemodel_info.mat",
+        "BFM_Fitting/select_vertex_id.mat",
+        "BFM_Fitting/similarity_Lm3D_all.mat",
+        "BFM_Fitting/std_exp.txt",
+    ]
+    for filename in bfm_files:
+        basename = Path(filename).name
+        out = bfm_dir / basename
+        if out.exists():
+            print(f"  [skip] {basename}")
+            continue
+        print(f"  {basename}")
+        hf_hub_download(repo_id="vinthony/SadTalker", filename=filename, local_dir=str(checkpoints_dir))
+
+    # GFPGAN face detection weights (used by SadTalker's enhancer)
+    print("[SadTalker] Downloading GFPGAN weights…")
+    gfpgan_dir = dest / "gfpgan" / "weights"
+    gfpgan_dir.mkdir(parents=True, exist_ok=True)
+    gfpgan_files = [
+        ("xinntao/facexlib", "weights/detection_Resnet50_Final.pth"),
+        ("xinntao/facexlib", "weights/parsing_parsenet.pth"),
+        ("TencentARC/GFPGAN", "experiments/pretrained_models/GFPGANv1.4.pth"),
+    ]
+    for repo_id, filename in gfpgan_files:
+        basename = Path(filename).name
+        out = gfpgan_dir / basename
+        if out.exists():
+            print(f"  [skip] {basename}")
+            continue
+        print(f"  {basename}")
+        hf_hub_download(repo_id=repo_id, filename=filename, local_dir=str(gfpgan_dir))
+
     print("[SadTalker] Done.")
 
 
