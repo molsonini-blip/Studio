@@ -62,9 +62,13 @@ def download_face_swap() -> None:
 def download_sadtalker() -> None:
     dest = MODELS / "sadtalker"
 
-    # Clone the repo first (gets inference.py and the correct directory layout)
+    # Clone the repo first (gets inference.py and the correct directory layout).
+    # If dest exists but has no inference.py, the previous clone failed mid-way — clean up and retry.
     if not (dest / "inference.py").exists():
         print("\n[SadTalker] Cloning SadTalker repo…")
+        if dest.exists():
+            import shutil
+            shutil.rmtree(dest)
         os.system(f'git clone --depth 1 https://github.com/OpenTalker/SadTalker.git "{dest}"')
     else:
         print("\n[SadTalker] Repo already cloned.")
@@ -116,23 +120,29 @@ def download_sadtalker() -> None:
         print(f"  {basename}")
         hf_hub_download(repo_id="vinthony/SadTalker", filename=filename, local_dir=str(checkpoints_dir))
 
-    # GFPGAN face detection weights (used by SadTalker's enhancer)
+    # GFPGAN face detection weights — downloaded from GitHub releases (not HuggingFace)
     print("[SadTalker] Downloading GFPGAN weights…")
     gfpgan_dir = dest / "gfpgan" / "weights"
     gfpgan_dir.mkdir(parents=True, exist_ok=True)
     gfpgan_files = [
-        ("xinntao/facexlib", "weights/detection_Resnet50_Final.pth"),
-        ("xinntao/facexlib", "weights/parsing_parsenet.pth"),
-        ("TencentARC/GFPGAN", "experiments/pretrained_models/GFPGANv1.4.pth"),
+        (
+            "https://github.com/xinntao/facexlib/releases/download/v0.1.0/detection_Resnet50_Final.pth",
+            gfpgan_dir / "detection_Resnet50_Final.pth",
+            "detection_Resnet50_Final.pth",
+        ),
+        (
+            "https://github.com/xinntao/facexlib/releases/download/v0.2.2/parsing_parsenet.pth",
+            gfpgan_dir / "parsing_parsenet.pth",
+            "parsing_parsenet.pth",
+        ),
+        (
+            "https://github.com/TencentARC/GFPGAN/releases/download/v1.3.0/GFPGANv1.4.pth",
+            gfpgan_dir / "GFPGANv1.4.pth",
+            "GFPGANv1.4.pth",
+        ),
     ]
-    for repo_id, filename in gfpgan_files:
-        basename = Path(filename).name
-        out = gfpgan_dir / basename
-        if out.exists():
-            print(f"  [skip] {basename}")
-            continue
-        print(f"  {basename}")
-        hf_hub_download(repo_id=repo_id, filename=filename, local_dir=str(gfpgan_dir))
+    for url, out, desc in gfpgan_files:
+        _download_url(url, out, desc)
 
     print("[SadTalker] Done.")
 
