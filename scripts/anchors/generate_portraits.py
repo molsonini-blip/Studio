@@ -53,9 +53,11 @@ def load_roster() -> list[dict]:
 def generate_portraits(
     anchors: list[dict],
     candidates: int = 4,
-    steps: int = 30,
+    steps: int = 75,
     guidance: float = 7.5,
     seed_base: int = 42,
+    width: int = 768,
+    height: int = 768,
 ):
     """Generate candidate portraits for each anchor using Stable Diffusion."""
     try:
@@ -81,6 +83,8 @@ def generate_portraits(
     ).to(device)
     pipe.enable_attention_slicing()
 
+    print(f"Settings: {width}x{height}, {steps} steps, guidance {guidance}, {candidates} candidates/anchor")
+
     for anchor in anchors:
         aid = anchor["id"]
         name = anchor["name"]
@@ -101,8 +105,8 @@ def generate_portraits(
                 negative_prompt=NEGATIVE_PROMPT,
                 num_inference_steps=steps,
                 guidance_scale=guidance,
-                width=512,
-                height=512,
+                width=width,
+                height=height,
                 generator=generator,
             )
             img = result.images[0]
@@ -145,14 +149,18 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate anchor portrait headshots")
     parser.add_argument("--anchors", nargs="+", metavar="ID",
                         help="Anchor IDs to generate (default: all)")
-    parser.add_argument("--candidates", type=int, default=4,
-                        help="Number of candidate images per anchor (default: 4)")
-    parser.add_argument("--steps", type=int, default=30,
-                        help="Diffusion steps (default: 30)")
+    parser.add_argument("--candidates", type=int, default=8,
+                        help="Number of candidate images per anchor (default: 8)")
+    parser.add_argument("--steps", type=int, default=75,
+                        help="Diffusion steps (default: 75)")
     parser.add_argument("--guidance", type=float, default=7.5,
                         help="CFG guidance scale (default: 7.5)")
     parser.add_argument("--seed", type=int, default=42,
                         help="Base random seed (default: 42)")
+    parser.add_argument("--width", type=int, default=768,
+                        help="Image width in pixels (default: 768)")
+    parser.add_argument("--height", type=int, default=768,
+                        help="Image height in pixels (default: 768)")
     parser.add_argument("--pick", nargs=2, metavar=("ANCHOR_ID", "NUM"),
                         help="Pick candidate N as final portrait for anchor")
     parser.add_argument("--status", action="store_true",
@@ -187,4 +195,6 @@ if __name__ == "__main__":
         steps=args.steps,
         guidance=args.guidance,
         seed_base=args.seed,
+        width=args.width,
+        height=args.height,
     )
