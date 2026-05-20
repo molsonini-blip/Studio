@@ -8,7 +8,7 @@ from core.news.models import RawArticle, ProcessedScript
 from core.news.formatter import build_script
 
 _OLLAMA_URL = "http://localhost:11434/api/generate"
-_MODEL = "llama3.2:3b"
+_MODEL = "studio-anchor"
 
 _SYSTEM_PROMPT = """You are a professional broadcast news editor. Your job is to take raw news articles and rewrite them as clean, factual anchor scripts.
 
