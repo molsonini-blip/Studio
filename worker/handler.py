@@ -47,7 +47,6 @@ def render(portrait_path: Path, audio_path: Path, out_dir: Path) -> Path:
         "--result_dir", str(out_dir.resolve()),
         "--still",
         "--preprocess", "full",
-        "--size", "512",
     ]
     result = subprocess.run(
         cmd, capture_output=True, text=True, timeout=600, cwd=str(SADTALKER_DIR)
@@ -61,7 +60,8 @@ def render(portrait_path: Path, audio_path: Path, out_dir: Path) -> Path:
     return new_files[0]
 
 
-def handler(job: dict) -> dict:
+async def handler(job: dict) -> dict:
+    import asyncio
     job_input = job["input"]
     anchor_id = job_input.get("anchor_id", "unknown")
     print(f"[handler] Job received: {anchor_id}")
@@ -80,7 +80,12 @@ def handler(job: dict) -> dict:
             portrait_path.write_bytes(base64.b64decode(job_input["portrait_b64"]))
             audio_path.write_bytes(base64.b64decode(job_input["audio_b64"]))
 
-            mp4_path = render(portrait_path, audio_path, out_dir)
+            # Run blocking SadTalker render in thread so the event loop stays alive
+            # (keeps RunPod health pings firing during long GPU inference)
+            loop = asyncio.get_event_loop()
+            mp4_path = await loop.run_in_executor(
+                None, render, portrait_path, audio_path, out_dir
+            )
             mp4_b64 = base64.b64encode(mp4_path.read_bytes()).decode()
             print(f"[handler] Done: {mp4_path.stat().st_size / 1024:.0f} KB")
             return {"mp4_b64": mp4_b64}

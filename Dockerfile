@@ -17,7 +17,7 @@ RUN pip3 install --quiet "numpy<2"
 RUN pip3 install --quiet \
     face_alignment imageio imageio-ffmpeg pydub librosa \
     scikit-image basicsr facexlib gfpgan resampy kornia safetensors \
-    "runpod==1.7.3"
+    "runpod>=1.7.4"
 
 # Clone SadTalker
 RUN git clone https://github.com/OpenTalker/SadTalker.git /sadtalker && \
