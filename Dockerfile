@@ -1,4 +1,4 @@
-FROM runpod/pytorch:2.2.1-py3.10-cuda12.1.1-devel-ubuntu22.04
+FROM runpod/pytorch:2.4.0-py3.11-cuda12.4.1-devel-ubuntu22.04
 
 RUN apt-get update -q && apt-get install -y -q \
     ffmpeg libgl1 libglib2.0-0 libsm6 libxext6 git \
