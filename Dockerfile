@@ -26,7 +26,6 @@ RUN pip3 install --quiet -r requirements.txt
 # The single HuggingFace repo contains every model Hallo needs:
 #   hallo/  stable-diffusion-v1-5/  motion_module/  face_analysis/
 #   wav2vec/  audio_separator/  sd-vae-ft-mse/
-RUN pip3 install --quiet "huggingface_hub[cli]"
 RUN python3 -c "\
 from huggingface_hub import snapshot_download; \
 print('[build] Downloading Hallo models (~15 GB)...'); \
