@@ -3,7 +3,7 @@ FROM nvidia/cuda:12.8.0-cudnn-devel-ubuntu22.04
 ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update -q && apt-get install -y -q \
     python3 python3-pip python3-venv \
-    ffmpeg libgl1 libglib2.0-0 libsm6 libxext6 git \
+    ffmpeg libgl1 libglib2.0-0 libsm6 libxext6 git wget \
     && rm -rf /var/lib/apt/lists/*
 
 # PyTorch 2.6 with CUDA 12.8 — supports Blackwell (sm_100)
@@ -22,6 +22,9 @@ RUN pip3 install --quiet \
 # Clone SadTalker
 RUN git clone https://github.com/OpenTalker/SadTalker.git /sadtalker && \
     cd /sadtalker && pip3 install --quiet -r requirements.txt 2>/dev/null || true
+
+# Download SadTalker models at build time — workers start instantly, no 404 on cold start
+RUN cd /sadtalker && bash scripts/download_models.sh
 
 # Patch basicsr torchvision incompatibility
 RUN python3 -c "\

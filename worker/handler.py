@@ -27,38 +27,14 @@ SADTALKER_DIR = Path("/sadtalker")
 
 
 def _ensure_models() -> None:
-    """Download SadTalker models if not already present (network volume or cold start)."""
+    """Verify SadTalker models are present (baked into image at build time)."""
     checkpoints = SADTALKER_DIR / "checkpoints"
-    print(f"[handler] checkpoints dir: {checkpoints} exists={checkpoints.exists()}")
-    if checkpoints.exists() and any(checkpoints.iterdir()):
-        print(f"[handler] Models already present: {list(checkpoints.iterdir())[:3]}")
-        return
-
-    print("[handler] Downloading SadTalker models...")
-    import urllib.request
-    checkpoints.mkdir(parents=True, exist_ok=True)
-    base_url = "https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/"
-    files = [
-        "SadTalker_V0.0.2_256.safetensors",
-        "SadTalker_V0.0.2_512.safetensors",
-        "mapping_00109-model.pth.tar",
-        "mapping_00229-model.pth.tar",
-        "facevid2vid_00189-model.pth.tar",
-        "auido2exp_00300-model.pth",
-        "auido2pose_00140-model.pth",
-        "shape_predictor_68_face_landmarks.dat",
-        "epoch_20.pth",
-    ]
-    for fname in files:
-        dest = checkpoints / fname
-        if not dest.exists():
-            print(f"  Downloading {fname}...")
-            urllib.request.urlretrieve(f"{base_url}{fname}", str(dest))
-    print("[handler] Model download complete.")
-
-    # gfpgan weights
-    gfpgan_dir = SADTALKER_DIR / "gfpgan" / "weights"
-    gfpgan_dir.mkdir(parents=True, exist_ok=True)
+    files = list(checkpoints.iterdir()) if checkpoints.exists() else []
+    print(f"[handler] checkpoints: {len(files)} files — {[f.name for f in files[:4]]}")
+    if not files:
+        raise RuntimeError(
+            "No models found in /sadtalker/checkpoints — image may be stale. Rebuild."
+        )
 
 
 def render(portrait_path: Path, audio_path: Path, out_dir: Path) -> Path:
