@@ -119,6 +119,13 @@ def handler(job: dict) -> dict:
 
 
 if __name__ == "__main__":
+    import torch
     print("[handler] Starting RunPod serverless worker...")
     print(f"[handler] SadTalker dir: {SADTALKER_DIR} (exists: {SADTALKER_DIR.exists()})")
+    if torch.cuda.is_available():
+        print(f"[handler] GPU: {torch.cuda.get_device_name(0)}")
+        cap = torch.cuda.get_device_capability(0)
+        print(f"[handler] Compute capability: sm_{cap[0]}{cap[1]}")
+    else:
+        print("[handler] WARNING: CUDA not available")
     runpod.serverless.start({"handler": handler})
