@@ -6,6 +6,85 @@ Git commits provide an additional cryptographic timestamp trail.
 
 ---
 
+## 2026-05-22 (Session 5)
+
+**Session 5 — Portrait picks, RunPod/SadTalker pipeline**
+
+### Work completed
+
+- Picked final portraits for all 12 anchors (8 candidates each were pre-generated on RunPod):
+  - aisha_thompson → candidate 3
+  - carlos_mendez → candidate 5
+  - dana_reyes → candidate 6
+  - james_callahan → candidate 2
+  - kevin_park → candidate 2
+  - layla_hassan → candidate 7
+  - marcus_webb → candidate 3
+  - mei_lin_zhou → candidate 8
+  - priya_nair → candidate 5
+  - rachel_torres → candidate 1
+  - sofia_okafor → candidate 5
+  - tyler_brooks → candidate 3
+
+- Fixed `preview_anchor.py`:
+  - `_add_lower_third()`: font paths now auto-detected across Debian/RHEL/macOS/Windows;
+    falls back to ffmpeg default if no system font found
+  - `_sadtalker()`: output detection now diffs MP4 set before/after inference instead of
+    globbing blindly — handles SadTalker's timestamp-based output naming correctly
+  - Added `--static` mode: CPU-only Ken Burns zoom + audio + lower-third; outputs to
+    `{anchor_id}_static_preview.mp4`; useful for pipeline testing without GPU
+
+- Built `scripts/runpod/` pipeline (4 scripts):
+  - `sync_to_pod.sh <HOST> <PORT>`: rsync Studio to a RunPod pod (excludes candidates,
+    models, outputs)
+  - `setup.sh`: one-shot environment setup on a fresh RunPod PyTorch pod (system pkgs,
+    Python deps, SadTalker models, GPU verification)
+  - `render.sh [anchor_id] [--static]`: runs preview_anchor.py on the pod; all 12 or
+    single anchor; GPU or static fallback
+  - `sync_from_pod.sh <HOST> <PORT>`: pulls rendered MP4s back to local machine
+
+### RunPod workflow (to execute)
+
+1. Rent a pod on runpod.io — **RTX 4090 or A10G** (both have ≥16GB VRAM; ~$0.39–0.74/hr)
+   - Template: **RunPod PyTorch 2.x** (CUDA pre-installed)
+   - Expose SSH port
+2. From local machine:
+   ```
+   bash scripts/runpod/sync_to_pod.sh <HOST> <PORT>
+   ```
+3. SSH into pod, then:
+   ```
+   cd /workspace/studio
+   bash scripts/runpod/setup.sh
+   export ELEVENLABS_API_KEY=your_key
+   bash scripts/runpod/render.sh        # all 12 anchors (~5 min each on A10G)
+   ```
+4. From local machine:
+   ```
+   bash scripts/runpod/sync_from_pod.sh <HOST> <PORT>
+   ```
+5. Terminate pod when done.
+
+### RunPod environment fixes (discovered during execution)
+- `pip install "numpy<2"` required — SadTalker incompatible with numpy 2.x
+- Missing deps: `safetensors`, `kornia`, `tqdm`, `face_alignment`, `basicsr`, `gfpgan`, `librosa`, `scikit-image`, `resampy`
+- `basicsr/data/degradations.py` patch: `functional_tensor` → `functional` (removed in torchvision 0.16+)
+- `apt-get install ffmpeg` required (not in RunPod PyTorch base image)
+- SadTalker must run with `cwd=sadtalker_dir` and absolute paths for audio/portrait/result_dir
+- All fixes baked into `setup.sh` and `preview_anchor.py`
+
+### Completed (2026-05-23)
+- All 12 anchor previews rendered successfully on RunPod (RTX GPU, ~7 min total)
+- Files pulled to local via scp: `data/anchors/previews/*_preview.mp4`
+- SSH access established: `ssh root@213.192.2.68 -p 40105 -i ~/.ssh/id_ed25519` (direct TCP, key added to pod authorized_keys)
+- Pod stopped after download
+
+### Pending
+- Review 12 preview MP4s; re-pick any portraits that don't animate well
+- End-to-end pipeline: live news fetch → script → TTS → SadTalker → lower-third → output
+
+---
+
 ## 2026-05-06 (Session 4)
 
 **Session 4 — Anchor roster, portrait generator, ElevenLabs voices**

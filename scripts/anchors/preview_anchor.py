@@ -73,6 +73,39 @@ def _tts(anchor: dict, script: str, out_path: Path, api_key: str) -> bool:
     return True
 
 
+def _static_video(portrait: Path, audio: Path, out_path: Path) -> bool:
+    """CPU-only: combine portrait + audio with a subtle Ken Burns zoom into a video."""
+    try:
+        # Get audio duration
+        probe = subprocess.run(
+            ["ffprobe", "-v", "error", "-show_entries", "format=duration",
+             "-of", "default=noprint_wrappers=1:nokey=1", str(audio)],
+            capture_output=True, text=True, timeout=30,
+        )
+        duration = float(probe.stdout.strip()) if probe.stdout.strip() else 10.0
+
+        # Slow zoom: scale from 100% to 105% over the clip duration
+        zoom_filter = (
+            f"zoompan=z='min(zoom+0.0003,1.05)':x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)'"
+            f":d={int(duration * 25)}:s=768x768:fps=25"
+        )
+        subprocess.run([
+            "ffmpeg",
+            "-loop", "1", "-i", str(portrait),
+            "-i", str(audio),
+            "-vf", zoom_filter,
+            "-c:v", "libx264", "-preset", "fast", "-crf", "23",
+            "-c:a", "aac", "-b:a", "128k",
+            "-t", str(duration),
+            "-shortest",
+            str(out_path), "-y", "-loglevel", "error",
+        ], check=True, timeout=300)
+        return True
+    except Exception as e:
+        print(f"  [static error] {e}")
+        return False
+
+
 def _sadtalker(portrait: Path, audio: Path, out_path: Path) -> bool:
     """Run SadTalker inference to produce lip-synced video."""
     sadtalker_dir = Path("models/sadtalker")
@@ -82,20 +115,20 @@ def _sadtalker(portrait: Path, audio: Path, out_path: Path) -> bool:
 
     cmd = [
         sys.executable,
-        str(sadtalker_dir / "inference.py"),
-        "--driven_audio", str(audio),
-        "--source_image", str(portrait),
-        "--result_dir", str(out_path.parent),
+        "inference.py",
+        "--driven_audio", str(audio.resolve()),
+        "--source_image", str(portrait.resolve()),
+        "--result_dir", str(out_path.parent.resolve()),
         "--still",
-        "--enhancer", "gfpgan",
         "--preprocess", "crop",
     ]
     try:
-        subprocess.run(cmd, check=True, timeout=300)
-        # SadTalker names output based on input filenames — find it
-        candidates = list(out_path.parent.glob("*.mp4"))
-        if candidates:
-            candidates[0].rename(out_path)
+        before = set(out_path.parent.rglob("*.mp4"))
+        subprocess.run(cmd, check=True, timeout=600, cwd=str(sadtalker_dir.resolve()))
+        after = set(out_path.parent.rglob("*.mp4"))
+        new_files = sorted(after - before, key=lambda p: p.stat().st_mtime, reverse=True)
+        if new_files:
+            new_files[0].rename(out_path)
             return True
         print("  [sadtalker] No output MP4 found")
         return False
@@ -104,18 +137,49 @@ def _sadtalker(portrait: Path, audio: Path, out_path: Path) -> bool:
         return False
 
 
+_FONT_CANDIDATES = [
+    # Debian/Ubuntu
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+    "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+    # RHEL/CentOS
+    "/usr/share/fonts/dejavu/DejaVuSans-Bold.ttf",
+    "/usr/share/fonts/dejavu/DejaVuSans.ttf",
+    # macOS
+    "/System/Library/Fonts/Helvetica.ttc",
+    # Windows
+    "C:/Windows/Fonts/arialbd.ttf",
+    "C:/Windows/Fonts/arial.ttf",
+]
+
+
+def _find_fonts() -> tuple[str, str]:
+    """Return (bold_font, regular_font) fontfile args, or empty strings if none found."""
+    bold = next((f for f in _FONT_CANDIDATES if Path(f).exists() and "Bold" in f or "bd" in f), "")
+    regular = next((f for f in _FONT_CANDIDATES if Path(f).exists() and "Bold" not in f and "bd" not in f), "")
+    if not bold:
+        bold = next((f for f in _FONT_CANDIDATES if Path(f).exists()), "")
+    if not regular:
+        regular = bold
+    return bold, regular
+
+
 def _add_lower_third(video_path: Path, anchor: dict, out_path: Path) -> bool:
     """Burn a lower-third name/title graphic onto the video using ffmpeg."""
+    import shutil
+
     lt = anchor["lower_third"]
     name  = lt["name"]
     title = lt["title"]
     color = lt["color_accent"].lstrip("#")
 
-    # ffmpeg drawbox + drawtext for a simple broadcast lower-third
+    bold_font, reg_font = _find_fonts()
+    bold_arg = f":fontfile={bold_font}" if bold_font else ""
+    reg_arg  = f":fontfile={reg_font}"  if reg_font  else ""
+
     filter_complex = (
         f"drawbox=x=0:y=ih-80:w=iw:h=80:color=0x{color}@0.85:t=fill,"
-        f"drawtext=text='{name}':fontcolor=white:fontsize=28:x=20:y=h-65:fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf,"
-        f"drawtext=text='{title}':fontcolor=white@0.85:fontsize=18:x=20:y=h-35:fontfile=/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf"
+        f"drawtext=text='{name}':fontcolor=white:fontsize=28:x=20:y=h-65{bold_arg},"
+        f"drawtext=text='{title}':fontcolor=white@0.85:fontsize=18:x=20:y=h-35{reg_arg}"
     )
 
     try:
@@ -128,12 +192,11 @@ def _add_lower_third(video_path: Path, anchor: dict, out_path: Path) -> bool:
         return True
     except Exception as e:
         print(f"  [lower-third error] {e} — saving without overlay")
-        import shutil
         shutil.copy2(video_path, out_path)
         return False
 
 
-def render_preview(anchor: dict, script: str, api_key: str) -> Path | None:
+def render_preview(anchor: dict, script: str, api_key: str, static: bool = False) -> Path | None:
     aid = anchor["id"]
     name = anchor["name"]
 
@@ -145,9 +208,11 @@ def render_preview(anchor: dict, script: str, api_key: str) -> Path | None:
         return None
 
     PREVIEWS_DIR.mkdir(parents=True, exist_ok=True)
-    final_out = PREVIEWS_DIR / f"{aid}_preview.mp4"
+    suffix = "_static_preview" if static else "_preview"
+    final_out = PREVIEWS_DIR / f"{aid}{suffix}.mp4"
 
-    print(f"\nRendering preview: {name}")
+    mode_label = "static (Ken Burns)" if static else "lip-sync (SadTalker)"
+    print(f"\nRendering preview [{mode_label}]: {name}")
     print(f"  Script: \"{script}\"")
 
     with tempfile.TemporaryDirectory() as tmp:
@@ -160,10 +225,14 @@ def render_preview(anchor: dict, script: str, api_key: str) -> Path | None:
         if not _tts(anchor, script, audio_path, api_key):
             return None
 
-        # 2. SadTalker lip-sync
+        # 2. Animation
         print("  [2/3] Animating portrait...")
-        if not _sadtalker(portrait, audio_path, raw_video):
-            return None
+        if static:
+            if not _static_video(portrait, audio_path, raw_video):
+                return None
+        else:
+            if not _sadtalker(portrait, audio_path, raw_video):
+                return None
 
         # 3. Lower-third overlay
         print("  [3/3] Adding lower-third...")
@@ -179,6 +248,8 @@ if __name__ == "__main__":
     parser.add_argument("--all", action="store_true", help="Render all ready anchors")
     parser.add_argument("--script", default="", help="Custom intro script")
     parser.add_argument("--status", action="store_true", help="Show readiness for all anchors")
+    parser.add_argument("--static", action="store_true",
+                        help="CPU-only mode: Ken Burns zoom instead of SadTalker lip-sync")
     args = parser.parse_args()
 
     roster = load_roster()
@@ -206,7 +277,7 @@ if __name__ == "__main__":
     if args.all:
         for anchor in roster:
             script = DEFAULT_SCRIPTS.get(anchor["id"], f"Hello, I'm {anchor['name']}.")
-            render_preview(anchor, script, api_key)
+            render_preview(anchor, script, api_key, static=args.static)
     elif args.anchor:
         anchor = next((a for a in roster if a["id"] == args.anchor), None)
         if not anchor:
@@ -214,6 +285,6 @@ if __name__ == "__main__":
             print(f"Valid: {', '.join(a['id'] for a in roster)}")
             sys.exit(1)
         script = args.script or DEFAULT_SCRIPTS.get(anchor["id"], f"Hello, I'm {anchor['name']}.")
-        render_preview(anchor, script, api_key)
+        render_preview(anchor, script, api_key, static=args.static)
     else:
         parser.print_help()
