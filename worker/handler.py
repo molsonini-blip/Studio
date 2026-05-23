@@ -37,7 +37,7 @@ def _ensure_models() -> None:
         )
 
 
-def render(portrait_path: Path, audio_path: Path, out_dir: Path) -> Path:
+def render(portrait_path: Path, audio_path: Path, out_dir: Path, pose_style: int = 0) -> Path:
     before = set(out_dir.rglob("*.mp4"))
     cmd = [
         sys.executable,
@@ -45,8 +45,8 @@ def render(portrait_path: Path, audio_path: Path, out_dir: Path) -> Path:
         "--driven_audio", str(audio_path.resolve()),
         "--source_image", str(portrait_path.resolve()),
         "--result_dir", str(out_dir.resolve()),
-        "--still",
         "--preprocess", "full",
+        "--pose_style", str(pose_style),
     ]
     result = subprocess.run(
         cmd, capture_output=True, text=True, timeout=600, cwd=str(SADTALKER_DIR)
@@ -80,11 +80,14 @@ async def handler(job: dict) -> dict:
             portrait_path.write_bytes(base64.b64decode(job_input["portrait_b64"]))
             audio_path.write_bytes(base64.b64decode(job_input["audio_b64"]))
 
+            pose_style = job_input.get("pose_style", 0)
+            print(f"[handler] pose_style={pose_style}")
+
             # Run blocking SadTalker render in thread so the event loop stays alive
             # (keeps RunPod health pings firing during long GPU inference)
             loop = asyncio.get_event_loop()
             mp4_path = await loop.run_in_executor(
-                None, render, portrait_path, audio_path, out_dir
+                None, render, portrait_path, audio_path, out_dir, pose_style
             )
             mp4_b64 = base64.b64encode(mp4_path.read_bytes()).decode()
             print(f"[handler] Done: {mp4_path.stat().st_size / 1024:.0f} KB")
