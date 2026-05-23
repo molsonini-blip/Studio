@@ -113,4 +113,6 @@ def handler(job: dict) -> dict:
 
 
 if __name__ == "__main__":
+    print("[handler] Starting RunPod serverless worker...")
+    print(f"[handler] SadTalker dir: {SADTALKER_DIR} (exists: {SADTALKER_DIR.exists()})")
     runpod.serverless.start({"handler": handler})

@@ -19,6 +19,8 @@ echo "=== Studio deploy → StatsDBServer01 ==="
 ssh -i "$KEY" "$SERVER" bash <<REMOTE
 set -e
 
+git config --global --add safe.directory "$REMOTE" 2>/dev/null || true
+
 if [ ! -d "$REMOTE/.git" ]; then
   echo "[setup] Initialising git in existing directory..."
   mkdir -p "$REMOTE"
@@ -31,7 +33,9 @@ if [ ! -d "$REMOTE/.git" ]; then
 else
   echo "[pull] Updating from GitHub..."
   cd "$REMOTE"
-  git pull --ff-only
+  git remote get-url origin &>/dev/null || git remote add origin "$REPO"
+  git fetch origin
+  git reset --hard origin/master
 fi
 
 cd "$REMOTE"
