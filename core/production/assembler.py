@@ -36,7 +36,7 @@ def add_lower_third(
     headline: str,
     duration: float | None = None,
 ) -> None:
-    """Scale to 1280x720 news desk composite with lower-third overlay."""
+    """Scale to 1280x720 studio composite with lower-third overlay."""
     font = _find_font()
     safe_name = anchor_name.replace("'", "\\'")
     safe_headline = (
@@ -47,15 +47,32 @@ def add_lower_third(
         .replace(",", "\\,")
     )
 
-    # Scale portrait to fit 580x580, pad to 1280x720 with dark news background.
-    # Portrait bottom lands at y=600; lower-third bar fills y=600-720.
+    # Layout (1280x720):
+    #   Portrait  : 560x560, x=360-920, y=20-580  (centered, 20px top margin)
+    #   Side cols : x=0-360 and x=920-1280         (studio walls)
+    #   Desk      : y=576-720                       (covers portrait bottom edge)
+    #   Lower 3rd : y=614-720
     vf = ",".join([
-        "scale=580:580:force_original_aspect_ratio=decrease",
-        "pad=1280:720:(ow-iw)/2:20:color=0x0c1525",
-        "drawbox=x=0:y=600:w=1280:h=120:color=0x05080f:t=fill",
-        "drawbox=x=0:y=600:w=1280:h=4:color=0x2448a0:t=fill",
-        f"drawtext=fontfile='{font}':text='{safe_name}':fontcolor=white:fontsize=40:x=40:y=614",
-        f"drawtext=fontfile='{font}':text='{safe_headline}':fontcolor=#99aacc:fontsize=26:x=40:y=660",
+        "scale=560:560:force_original_aspect_ratio=decrease",
+        "pad=1280:720:(ow-iw)/2:20:color=0x07101a",
+        # Studio side columns
+        "drawbox=x=0:y=0:w=360:h=580:color=0x0b1426:t=fill",
+        "drawbox=x=357:y=0:w=3:h=580:color=0x1a3050:t=fill",
+        "drawbox=x=920:y=0:w=360:h=580:color=0x0b1426:t=fill",
+        "drawbox=x=920:y=0:w=3:h=580:color=0x1a3050:t=fill",
+        # Top accent bar
+        "drawbox=x=0:y=0:w=1280:h=3:color=0x1e4070:t=fill",
+        # Desk surface (overlaps portrait bottom slightly — desk in front of anchor)
+        "drawbox=x=0:y=576:w=1280:h=144:color=0x0c1820:t=fill",
+        "drawbox=x=20:y=574:w=1240:h=3:color=0x1e3a60:t=fill",
+        # Network bug — top right
+        "drawbox=x=1170:y=10:w=100:h=26:color=0x091525:t=fill",
+        f"drawtext=fontfile='{font}':text='AI NEWS':fontcolor=0x3377bb:fontsize=15:x=1178:y=16",
+        # Lower third
+        "drawbox=x=0:y=614:w=1280:h=106:color=0x04070e:t=fill",
+        "drawbox=x=0:y=614:w=1280:h=4:color=0x2448a0:t=fill",
+        f"drawtext=fontfile='{font}':text='{safe_name}':fontcolor=white:fontsize=40:x=40:y=626",
+        f"drawtext=fontfile='{font}':text='{safe_headline}':fontcolor=#8899bb:fontsize=26:x=40:y=674",
     ])
 
     cmd = ["ffmpeg", "-y", "-i", str(input_mp4), "-vf", vf, "-c:a", "copy", str(output_mp4)]

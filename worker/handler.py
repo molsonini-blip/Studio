@@ -47,6 +47,7 @@ def render(portrait_path: Path, audio_path: Path, out_dir: Path, pose_style: int
         "--result_dir", str(out_dir.resolve()),
         "--preprocess", "full",
         "--pose_style", str(pose_style),
+        "--enhancer", "gfpgan",
     ]
     result = subprocess.run(
         cmd, capture_output=True, text=True, timeout=600, cwd=str(SADTALKER_DIR)
