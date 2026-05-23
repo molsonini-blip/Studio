@@ -45,7 +45,7 @@ def add_lower_third(
     vf = (
         f"drawbox=x=0:y=ih-100:w=iw:h=100:color=black@0.7:t=fill,"
         f"drawtext=fontfile='{font}':text='{safe_name}':fontcolor=white:"
-        f"fontsize=28:x=20:y=h-85:bold=1,"
+        f"fontsize=28:x=20:y=h-85,"
         f"drawtext=fontfile='{font}':text='{safe_headline}':fontcolor=#cccccc:"
         f"fontsize=20:x=20:y=h-50"
     )
