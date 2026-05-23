@@ -58,7 +58,7 @@ class ServerlessManager:
     def wait_for_job(
         self,
         job_id: str,
-        timeout: int = 600,
+        timeout: int = 1800,
         poll_interval: int = 10,
     ) -> dict:
         """Poll until job completes. Returns output dict."""
