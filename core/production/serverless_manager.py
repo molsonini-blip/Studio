@@ -10,7 +10,6 @@ from __future__ import annotations
 
 import base64
 import os
-import random
 import time
 from pathlib import Path
 
@@ -43,7 +42,9 @@ class ServerlessManager:
                 "anchor_id": anchor_id,
                 "portrait_b64": base64.b64encode(portrait.read_bytes()).decode(),
                 "audio_b64": base64.b64encode(audio.read_bytes()).decode(),
-                "pose_style": random.randint(0, 45),
+                "lip_weight": 1.2,
+                "face_weight": 1.0,
+                "pose_weight": 1.0,
             }
         }
         resp = requests.post(

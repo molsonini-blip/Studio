@@ -1,40 +1,39 @@
-FROM nvidia/cuda:12.8.0-cudnn-devel-ubuntu22.04
+FROM nvidia/cuda:12.1.1-cudnn8-devel-ubuntu22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
+ENV PYTHONUNBUFFERED=1
+
 RUN apt-get update -q && apt-get install -y -q \
-    python3 python3-pip python3-venv \
-    ffmpeg libgl1 libglib2.0-0 libsm6 libxext6 git wget \
+    python3 python3-pip \
+    ffmpeg libgl1 libglib2.0-0 libsm6 libxext6 git git-lfs \
+    && git lfs install \
     && rm -rf /var/lib/apt/lists/*
 
-# PyTorch 2.6 with CUDA 12.8 — supports Blackwell (sm_100)
+# PyTorch 2.2.2 + CUDA 12.1 — A100/Ampere (sm_80)
 RUN pip3 install --quiet \
-    torch torchvision torchaudio \
-    --index-url https://download.pytorch.org/whl/cu128
+    torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 \
+    --index-url https://download.pytorch.org/whl/cu121
 
-# numpy<2 before SadTalker deps
-RUN pip3 install --quiet "numpy<2"
+# Clone Hallo
+RUN git clone https://github.com/fudan-generative-vision/hallo /hallo
 
-RUN pip3 install --quiet \
-    face_alignment imageio imageio-ffmpeg pydub librosa \
-    scikit-image basicsr facexlib gfpgan resampy kornia safetensors \
-    "runpod>=1.7.4"
+WORKDIR /hallo
 
-# Clone SadTalker
-RUN git clone https://github.com/OpenTalker/SadTalker.git /sadtalker && \
-    cd /sadtalker && pip3 install --quiet -r requirements.txt 2>/dev/null || true
+# Hallo Python requirements (diffusers, xformers, insightface, mediapipe, etc.)
+RUN pip3 install --quiet -r requirements.txt
 
-# Download SadTalker models at build time — workers start instantly, no 404 on cold start
-RUN cd /sadtalker && bash scripts/download_models.sh
-
-# Patch basicsr torchvision incompatibility
+# Download ALL pretrained models at build time.
+# The single HuggingFace repo contains every model Hallo needs:
+#   hallo/  stable-diffusion-v1-5/  motion_module/  face_analysis/
+#   wav2vec/  audio_separator/  sd-vae-ft-mse/
+RUN pip3 install --quiet "huggingface_hub[cli]"
 RUN python3 -c "\
-import site, pathlib; \
-[f.write_text(f.read_text().replace( \
-    'from torchvision.transforms.functional_tensor import rgb_to_grayscale', \
-    'from torchvision.transforms.functional import rgb_to_grayscale')) \
- for d in site.getsitepackages() \
- for f in [pathlib.Path(d) / 'basicsr/data/degradations.py'] \
- if f.exists() and 'functional_tensor' in f.read_text()]"
+from huggingface_hub import snapshot_download; \
+print('[build] Downloading Hallo models (~15 GB)...'); \
+snapshot_download('fudan-generative-ai/hallo', local_dir='/hallo/pretrained_models'); \
+print('[build] Download complete.')"
+
+RUN pip3 install --quiet "runpod>=1.7.4"
 
 COPY worker/handler.py /handler.py
 
