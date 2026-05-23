@@ -29,7 +29,9 @@ SADTALKER_DIR = Path("/sadtalker")
 def _ensure_models() -> None:
     """Download SadTalker models if not already present (network volume or cold start)."""
     checkpoints = SADTALKER_DIR / "checkpoints"
+    print(f"[handler] checkpoints dir: {checkpoints} exists={checkpoints.exists()}")
     if checkpoints.exists() and any(checkpoints.iterdir()):
+        print(f"[handler] Models already present: {list(checkpoints.iterdir())[:3]}")
         return
 
     print("[handler] Downloading SadTalker models...")
@@ -75,11 +77,15 @@ def render(portrait_path: Path, audio_path: Path, out_dir: Path) -> Path:
         "--still",
         "--preprocess", "crop",
     ]
-    subprocess.run(cmd, check=True, timeout=600, cwd=str(SADTALKER_DIR))
+    result = subprocess.run(
+        cmd, capture_output=True, text=True, timeout=600, cwd=str(SADTALKER_DIR)
+    )
+    if result.returncode != 0:
+        raise RuntimeError(f"SadTalker failed (rc={result.returncode}):\n{result.stderr[-3000:]}")
     after = set(out_dir.rglob("*.mp4"))
     new_files = sorted(after - before, key=lambda p: p.stat().st_mtime, reverse=True)
     if not new_files:
-        raise RuntimeError("SadTalker produced no output MP4")
+        raise RuntimeError(f"SadTalker produced no MP4.\nstdout: {result.stdout[-1000:]}")
     return new_files[0]
 
 
