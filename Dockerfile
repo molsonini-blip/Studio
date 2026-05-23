@@ -19,12 +19,15 @@ RUN git clone https://github.com/fudan-generative-vision/hallo /hallo
 
 WORKDIR /hallo
 
-# Hallo Python requirements (diffusers, xformers, insightface, mediapipe, etc.)
-RUN pip3 install --quiet -r requirements.txt
+# Hallo Python requirements (diffusers, insightface, mediapipe, etc.) — skip xformers here
+RUN pip3 install --quiet -r requirements.txt --ignore-requires-python
 
-# diffusers==0.27.2 imports cached_download which was removed in huggingface_hub>=0.24.0.
-# Force-pin back to the last compatible version after requirements may have upgraded it.
-RUN pip3 install --quiet "huggingface_hub==0.23.4" --force-reinstall
+# Install xformers wheel matched to PyTorch 2.2.2 + CUDA 12.1
+RUN pip3 install --quiet "xformers==0.0.25.post1" \
+    --index-url https://download.pytorch.org/whl/cu121
+
+# Install Hallo itself as a Python package (scripts import from hallo.*)
+RUN pip3 install --quiet -e .
 
 # Download ALL pretrained models at build time.
 # The single HuggingFace repo contains every model Hallo needs:
@@ -37,6 +40,10 @@ snapshot_download('fudan-generative-ai/hallo', local_dir='/hallo/pretrained_mode
 print('[build] Download complete.')"
 
 RUN pip3 install --quiet "runpod>=1.7.4"
+
+# Must be last — diffusers==0.27.2 needs cached_download removed in huggingface_hub>=0.24.0.
+# Pin after all other installs so nothing can upgrade it again.
+RUN pip3 install --quiet "huggingface_hub==0.23.4" --force-reinstall
 
 COPY worker/handler.py /handler.py
 
