@@ -15,7 +15,7 @@ from pathlib import Path
 
 import requests
 
-RUNPOD_BASE = "https://api.runpod.io/v2"
+RUNPOD_BASE = "https://api.runpod.ai/v2"
 
 
 class ServerlessManager:
