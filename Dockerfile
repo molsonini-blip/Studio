@@ -22,6 +22,10 @@ WORKDIR /hallo
 # Hallo Python requirements (diffusers, xformers, insightface, mediapipe, etc.)
 RUN pip3 install --quiet -r requirements.txt
 
+# diffusers==0.27.2 imports cached_download which was removed in huggingface_hub>=0.24.0.
+# Force-pin back to the last compatible version after requirements may have upgraded it.
+RUN pip3 install --quiet "huggingface_hub==0.23.4" --force-reinstall
+
 # Download ALL pretrained models at build time.
 # The single HuggingFace repo contains every model Hallo needs:
 #   hallo/  stable-diffusion-v1-5/  motion_module/  face_analysis/
