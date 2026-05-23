@@ -95,7 +95,11 @@ def filter_headlines(headlines: list[dict], max_items: int = 6) -> list[dict]:
             raw = body.get("response") or body.get("message", {}).get("content", "")
             if not raw:
                 continue
-            selected_titles = json.loads(raw)
+            # extract JSON array even if Ollama wraps it in prose
+            start, end = raw.find("["), raw.rfind("]")
+            if start == -1 or end == -1:
+                continue
+            selected_titles = json.loads(raw[start:end+1])
             selected = [h for h in headlines if h["title"] in selected_titles]
             if selected:
                 print(f"[pipeline] Ollama filter via {host}: {len(selected)} selected")
