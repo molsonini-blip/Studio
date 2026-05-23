@@ -35,31 +35,26 @@ def _ensure_models() -> None:
         return
 
     print("[handler] Downloading SadTalker models...")
-    sys.path.insert(0, str(SADTALKER_DIR))
-    script = SADTALKER_DIR / "scripts" / "download_models.sh"
-    if script.exists():
-        subprocess.run(["bash", str(script)], cwd=str(SADTALKER_DIR), check=True)
-    else:
-        # Manual download fallback
-        import urllib.request
-        checkpoints.mkdir(parents=True, exist_ok=True)
-        base_url = "https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/"
-        files = [
-            "SadTalker_V0.0.2_256.safetensors",
-            "SadTalker_V0.0.2_512.safetensors",
-            "mapping_00109-model.pth.tar",
-            "mapping_00229-model.pth.tar",
-            "facevid2vid_00189-model.pth.tar",
-            "auido2exp_00300-model.pth",
-            "auido2pose_00140-model.pth",
-            "shape_predictor_68_face_landmarks.dat",
-            "epoch_20.pth",
-        ]
-        for fname in files:
-            dest = checkpoints / fname
-            if not dest.exists():
-                print(f"  Downloading {fname}...")
-                urllib.request.urlretrieve(f"{base_url}{fname}", str(dest))
+    import urllib.request
+    checkpoints.mkdir(parents=True, exist_ok=True)
+    base_url = "https://github.com/OpenTalker/SadTalker/releases/download/v0.0.2-rc/"
+    files = [
+        "SadTalker_V0.0.2_256.safetensors",
+        "SadTalker_V0.0.2_512.safetensors",
+        "mapping_00109-model.pth.tar",
+        "mapping_00229-model.pth.tar",
+        "facevid2vid_00189-model.pth.tar",
+        "auido2exp_00300-model.pth",
+        "auido2pose_00140-model.pth",
+        "shape_predictor_68_face_landmarks.dat",
+        "epoch_20.pth",
+    ]
+    for fname in files:
+        dest = checkpoints / fname
+        if not dest.exists():
+            print(f"  Downloading {fname}...")
+            urllib.request.urlretrieve(f"{base_url}{fname}", str(dest))
+    print("[handler] Model download complete.")
 
     # gfpgan weights
     gfpgan_dir = SADTALKER_DIR / "gfpgan" / "weights"
