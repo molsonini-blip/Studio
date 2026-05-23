@@ -46,7 +46,8 @@ def render(portrait_path: Path, audio_path: Path, out_dir: Path) -> Path:
         "--source_image", str(portrait_path.resolve()),
         "--result_dir", str(out_dir.resolve()),
         "--still",
-        "--preprocess", "crop",
+        "--preprocess", "full",
+        "--size", "512",
     ]
     result = subprocess.run(
         cmd, capture_output=True, text=True, timeout=600, cwd=str(SADTALKER_DIR)

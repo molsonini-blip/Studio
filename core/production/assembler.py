@@ -36,22 +36,35 @@ def add_lower_third(
     headline: str,
     duration: float | None = None,
 ) -> None:
-    """Burn a lower-third graphic onto a video segment."""
+    """Scale to 1280x720 news desk composite with lower-third overlay."""
     font = _find_font()
     safe_name = anchor_name.replace("'", "\\'")
-    safe_headline = headline[:60].replace("'", "\\'").replace(":", "\\:")
-
-    # two-line lower third: name (top) + headline (bottom)
-    vf = (
-        f"drawbox=x=0:y=ih-100:w=iw:h=100:color=black@0.7:t=fill,"
-        f"drawtext=fontfile='{font}':text='{safe_name}':fontcolor=white:"
-        f"fontsize=28:x=20:y=h-85,"
-        f"drawtext=fontfile='{font}':text='{safe_headline}':fontcolor=#cccccc:"
-        f"fontsize=20:x=20:y=h-50"
+    safe_headline = (
+        headline[:70]
+        .replace("\\", "\\\\")
+        .replace("'", "\\'")
+        .replace(":", "\\:")
+        .replace(",", "\\,")
     )
 
+    # Scale portrait to fit 580x580, pad to 1280x720 with dark news background.
+    # Portrait bottom lands at y=600; lower-third bar fills y=600-720.
+    vf = ",".join([
+        "scale=580:580:force_original_aspect_ratio=decrease",
+        "pad=1280:720:(ow-iw)/2:20:color=0x0c1525",
+        "drawbox=x=0:y=600:w=1280:h=120:color=0x05080f:t=fill",
+        "drawbox=x=0:y=600:w=1280:h=4:color=0x2448a0:t=fill",
+        f"drawtext=fontfile='{font}':text='{safe_name}':fontcolor=white:fontsize=40:x=40:y=614",
+        f"drawtext=fontfile='{font}':text='{safe_headline}':fontcolor=#99aacc:fontsize=26:x=40:y=660",
+    ])
+
     cmd = ["ffmpeg", "-y", "-i", str(input_mp4), "-vf", vf, "-c:a", "copy", str(output_mp4)]
-    subprocess.run(cmd, check=True, capture_output=True)
+    result = subprocess.run(cmd, capture_output=True)
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"ffmpeg lower-third failed (rc={result.returncode}):\n"
+            f"{result.stderr.decode(errors='replace')[-2000:]}"
+        )
 
 
 def concat_segments(segments: list[Path], output: Path) -> None:
@@ -69,8 +82,13 @@ def concat_segments(segments: list[Path], output: Path) -> None:
         "-c", "copy",
         str(output),
     ]
-    subprocess.run(cmd, check=True, capture_output=True)
+    result = subprocess.run(cmd, capture_output=True)
     list_file.unlink(missing_ok=True)
+    if result.returncode != 0:
+        raise RuntimeError(
+            f"ffmpeg concat failed (rc={result.returncode}):\n"
+            f"{result.stderr.decode(errors='replace')[-2000:]}"
+        )
 
 
 def assemble_broadcast(
