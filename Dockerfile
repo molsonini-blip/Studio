@@ -19,15 +19,14 @@ RUN git clone https://github.com/fudan-generative-vision/hallo /hallo
 
 WORKDIR /hallo
 
-# Hallo Python requirements (diffusers, insightface, mediapipe, etc.) — skip xformers here
-RUN pip3 install --quiet -r requirements.txt --ignore-requires-python
-
-# Install xformers wheel matched to PyTorch 2.2.2 + CUDA 12.1
-RUN pip3 install --quiet "xformers==0.0.25.post1" \
-    --index-url https://download.pytorch.org/whl/cu121
+# Hallo Python requirements (diffusers, insightface, mediapipe, etc.)
+RUN pip3 install --quiet -r requirements.txt
 
 # Install Hallo itself as a Python package (scripts import from hallo.*)
-RUN pip3 install --quiet -e .
+RUN pip3 install -e .
+
+# PYTHONPATH ensures 'import hallo' works even if editable install is incomplete
+ENV PYTHONPATH=/hallo
 
 # Download ALL pretrained models at build time.
 # The single HuggingFace repo contains every model Hallo needs:
