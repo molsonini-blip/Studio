@@ -19,8 +19,9 @@ RUN git clone https://github.com/fudan-generative-vision/hallo /hallo
 
 WORKDIR /hallo
 
-# Hallo Python requirements (diffusers, insightface, mediapipe, etc.)
-RUN pip3 install --quiet -r requirements.txt
+# Hallo Python requirements — strip xformers (no cu121 wheel; Hallo runs without it)
+RUN grep -v "^xformers" requirements.txt > /tmp/req.txt && \
+    pip3 install -r /tmp/req.txt
 
 # Install Hallo itself as a Python package (scripts import from hallo.*)
 RUN pip3 install -e .

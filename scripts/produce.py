@@ -46,7 +46,7 @@ def main() -> None:
     args = parser.parse_args()
 
     missing = []
-    if not os.environ.get("ELEVENLABS_API_KEY"):
+    if not args.dry_run and not os.environ.get("ELEVENLABS_API_KEY"):
         missing.append("ELEVENLABS_API_KEY")
     if not args.dry_run and not os.environ.get("RUNPOD_API_KEY"):
         missing.append("RUNPOD_API_KEY")

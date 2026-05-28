@@ -26,6 +26,15 @@ env/
 outputs/
 !outputs/.gitkeep
 
+# Anchor candidate portraits (drafts — only finals are committed)
+data/anchors/portraits/*_candidate_*.png
+
+# Rendered preview videos (large, regeneratable via RunPod)
+data/anchors/previews/
+
+# Temp working files
+tmp/
+
 # HuggingFace / torch cache
 .cache/
 
