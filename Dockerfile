@@ -14,35 +14,34 @@ RUN pip3 install --quiet \
     torch==2.2.2 torchvision==0.17.2 torchaudio==2.2.2 \
     --index-url https://download.pytorch.org/whl/cu121
 
-# Clone Hallo
-RUN git clone https://github.com/fudan-generative-vision/hallo /hallo
+# Clone MuseTalk
+RUN git clone https://github.com/TMElyralab/MuseTalk /musetalk
 
-WORKDIR /hallo
+WORKDIR /musetalk
 
-# Hallo Python requirements — strip xformers (no cu121 wheel; Hallo runs without it)
-RUN grep -v "^xformers" requirements.txt > /tmp/req.txt && \
-    pip3 install -r /tmp/req.txt
+# MuseTalk Python requirements
+RUN pip3 install --quiet -r requirements.txt
 
-# Install Hallo itself as a Python package (scripts import from hallo.*)
-RUN pip3 install -e .
+# onnxruntime-gpu for DWPose (CUDA 12.x compatible wheel)
+RUN pip3 install --quiet onnxruntime-gpu --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/
 
-# PYTHONPATH ensures 'import hallo' works even if editable install is incomplete
-ENV PYTHONPATH=/hallo
+# MuseTalk imports from musetalk.*
+ENV PYTHONPATH=/musetalk
 
-# Download ALL pretrained models at build time.
-# The single HuggingFace repo contains every model Hallo needs:
-#   hallo/  stable-diffusion-v1-5/  motion_module/  face_analysis/
-#   wav2vec/  audio_separator/  sd-vae-ft-mse/
+# Download all pretrained models at build time (~5 GB).
+# snapshot_download pulls the full TMElyralab/MuseTalk repo which contains:
+#   models/musetalk/   models/whisper/   models/dwpose/
+#   models/face-parse-bisenet/   models/sd-vae-ft-mse/
 RUN python3 -c "\
 from huggingface_hub import snapshot_download; \
-print('[build] Downloading Hallo models (~15 GB)...'); \
-snapshot_download('fudan-generative-ai/hallo', local_dir='/hallo/pretrained_models'); \
+print('[build] Downloading MuseTalk models (~5 GB)...'); \
+snapshot_download('TMElyralab/MuseTalk', local_dir='/musetalk/models', ignore_patterns=['*.md']); \
 print('[build] Download complete.')"
 
 RUN pip3 install --quiet "runpod>=1.7.4"
 
-# Must be last — diffusers==0.27.2 needs cached_download removed in huggingface_hub>=0.24.0.
-# Pin after all other installs so nothing can upgrade it again.
+# diffusers==0.27.2 (in MuseTalk requirements) uses cached_download which was
+# removed in huggingface_hub>=0.24.0 — pin after all other installs.
 RUN pip3 install --quiet "huggingface_hub==0.23.4" --force-reinstall
 
 COPY worker/handler.py /handler.py

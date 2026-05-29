@@ -1,28 +1,30 @@
 FROM runpod/pytorch:2.2.1-py3.10-cuda12.1.1-devel-ubuntu22.04
 
-# System deps
 RUN apt-get update -q && apt-get install -y -q \
     ffmpeg libgl1 libglib2.0-0 libsm6 libxext6 git git-lfs \
+    && git lfs install \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone Hallo
-RUN git lfs install && \
-    git clone https://github.com/fudan-generative-vision/hallo.git /hallo
+RUN git clone https://github.com/TMElyralab/MuseTalk /musetalk
 
-# Install Hallo Python deps + RunPod SDK
-RUN pip install --quiet -r /hallo/requirements.txt && \
-    pip install --quiet runpod huggingface_hub
+RUN pip install --quiet -r /musetalk/requirements.txt && \
+    pip install --quiet onnxruntime-gpu \
+        --extra-index-url https://aiinfra.pkgs.visualstudio.com/PublicPackages/_packaging/onnxruntime-cuda-12/pypi/simple/ && \
+    pip install --quiet runpod && \
+    pip install --quiet "huggingface_hub==0.23.4" --force-reinstall
 
-# Models (~15 GB total). Two deployment options:
+ENV PYTHONPATH=/musetalk
+
+# Models (~5 GB). Two deployment options:
 #
 #   Option A — Bake into image (slow build, fast cold start):
-#     docker build --build-arg BAKE_MODELS=1 -t studio-hallo-worker .
+#     docker build --build-arg BAKE_MODELS=1 -t studio-musetalk-worker .
 #
 #   Option B — RunPod Network Volume (recommended for production):
-#     1. Create a Network Volume in RunPod (20 GB+)
-#     2. Spin up a temp GPU pod with the volume mounted at /hallo/pretrained_models
+#     1. Create a Network Volume in RunPod (10 GB+)
+#     2. Spin up a temp GPU pod with the volume mounted at /musetalk/models
 #     3. Run: python3 /download_models.py
-#     4. Configure the serverless endpoint to mount that volume at /hallo/pretrained_models
+#     4. Configure the serverless endpoint to mount that volume at /musetalk/models
 ARG BAKE_MODELS=0
 COPY download_models.py /download_models.py
 RUN if [ "$BAKE_MODELS" = "1" ]; then python3 /download_models.py; fi
