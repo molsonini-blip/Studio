@@ -17,7 +17,7 @@ MODELS_DIR.mkdir(parents=True, exist_ok=True)
 print("[download] Pulling TMElyralab/MuseTalk (~5 GB)...")
 snapshot_download(
     "TMElyralab/MuseTalk",
-    local_dir=str(MODELS_DIR),
+    local_dir="/musetalk",
     ignore_patterns=["*.md"],
 )
 print("[done] All MuseTalk models downloaded.")

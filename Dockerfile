@@ -35,7 +35,7 @@ ENV PYTHONPATH=/musetalk
 RUN python3 -c "\
 from huggingface_hub import snapshot_download; \
 print('[build] Downloading MuseTalk models (~5 GB)...'); \
-snapshot_download('TMElyralab/MuseTalk', local_dir='/musetalk/models', ignore_patterns=['*.md']); \
+snapshot_download('TMElyralab/MuseTalk', local_dir='/musetalk', ignore_patterns=['*.md']); \
 print('[build] Download complete.')"
 
 RUN pip3 install --quiet "runpod>=1.7.4"
