@@ -119,6 +119,7 @@ def generate_series(
         f"{avoid}"
     )
 
+    # Get the series bible (without books first — avoids token overflow)
     raw = ollama.call_json(
         prompt,
         system=_SERIES_SYSTEM,
@@ -126,6 +127,19 @@ def generate_series(
         temperature=0.92,
         max_tokens=5000,
     )
+
+    # Build book list in batches of 6 to avoid token limits
+    all_books_raw = list(raw.get("books", []))
+    target = genre_def.books_per_series
+    if len(all_books_raw) < target:
+        all_books_raw = _expand_books(
+            series_title=raw.get("series_title", ""),
+            setting=raw.get("setting", ""),
+            existing_books=all_books_raw,
+            target_count=target,
+            genre_def=genre_def,
+            model=model,
+        )
 
     books = [
         BookEntry(
@@ -137,7 +151,7 @@ def generate_series(
             conflict=b.get("conflict", ""),
             resolution_hint=b.get("resolution_hint", ""),
         )
-        for i, b in enumerate(raw.get("books", []))
+        for i, b in enumerate(all_books_raw)
     ]
 
     return SeriesBible(
@@ -150,6 +164,55 @@ def generate_series(
         recurring_cast=raw.get("recurring_cast", []),
         books=books,
     )
+
+
+_EXPAND_SYSTEM = """You are a book series developer adding more books to an existing series.
+Return ONLY a JSON array of new book objects. Continue the numbering from where the series left off.
+Each object: {"number": N, "title": "...", "protagonist": "...", "trope": "...", "logline": "...", "conflict": "...", "resolution_hint": "..."}
+No preamble. No markdown. Just the JSON array."""
+
+
+def _expand_books(
+    series_title: str,
+    setting: str,
+    existing_books: list[dict],
+    target_count: int,
+    genre_def: GenreDef,
+    model: str,
+) -> list[dict]:
+    """Request more books in batches of 6 until we reach target_count."""
+    books = list(existing_books)
+    batch_size = 6
+
+    while len(books) < target_count:
+        remaining = target_count - len(books)
+        batch = min(batch_size, remaining)
+        next_num = len(books) + 1
+
+        existing_titles = ", ".join(f"#{b.get('number',i+1)}: {b.get('title','')}"
+                                    for i, b in enumerate(books[-6:]))
+        prompt = (
+            f"Series: {series_title} | Setting: {setting}\n"
+            f"Genre: {genre_def.name} | Style: {genre_def.style_notes}\n"
+            f"Last books already written: {existing_titles}\n\n"
+            f"Add {batch} MORE books to this series (books #{next_num}–#{next_num+batch-1}). "
+            f"Each new couple/protagonist must be different from all previous books. "
+            f"Keep the same setting and world."
+        )
+        try:
+            new_raw = ollama.call_json(prompt, system=_EXPAND_SYSTEM, model=model,
+                                       temperature=0.88, max_tokens=2000)
+            new_books = new_raw if isinstance(new_raw, list) else []
+            if not new_books:
+                break
+            # Fix numbering
+            for i, b in enumerate(new_books):
+                b["number"] = next_num + i
+            books.extend(new_books)
+        except Exception:
+            break
+
+    return books
 
 
 def save_series(series: SeriesBible, base_dir: Path) -> Path:
