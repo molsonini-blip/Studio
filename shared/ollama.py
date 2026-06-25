@@ -12,9 +12,8 @@ from typing import Any
 
 import httpx
 
-# Try the server first, fall back to localhost
+# All pipelines run on EdgeExpert — Ollama is local
 _HOSTS = [
-    "http://162.251.146.56:11434",
     "http://localhost:11434",
 ]
 _DEFAULT_MODEL = "llama3.2:3b"

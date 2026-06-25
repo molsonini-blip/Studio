@@ -8,13 +8,13 @@
 #   bash movie/tony_scott/deploy_research.sh
 #
 # Monitor:
-#   ssh edgeexpert tail -f /opt/studio/logs/tony_scott_research.log
+#   ssh edgeexpert "tail -f ~/projects/studio/logs/tony_scott_research.log"
 #
 # Stop:
-#   ssh edgeexpert kill $(cat /opt/studio/logs/tony_scott_research.pid)
+#   ssh edgeexpert "kill \$(cat ~/projects/studio/logs/tony_scott_research.pid)"
 
-SERVER="edgeexpert"        # Update with actual hostname/IP if needed
-REMOTE_DIR="/opt/studio"
+SERVER="edgeexpert"
+REMOTE_DIR="$HOME/projects/studio"
 PYTHON="python3"
 
 echo "=== Deploying Tony Scott research daemon to $SERVER ==="
@@ -27,36 +27,34 @@ echo ""
 echo "=== Installing dependencies on $SERVER ==="
 ssh "$SERVER" "
     cd $REMOTE_DIR
-    pip3 install duckduckgo-search httpx 2>&1 | tail -5
+    pip3 install duckduckgo-search httpx --quiet 2>&1 | grep -v '^Collecting\|^  Down\|^  Inst\|^  Using\|^Already'
 
     # Create log directory
-    mkdir -p /opt/studio/logs
+    mkdir -p $REMOTE_DIR/logs
 
     # Seed the registry with known sources
     PYTHONPATH=$REMOTE_DIR $PYTHON -m movie.tony_scott.sources.registry --seed
 
     # Kill any existing research daemon
-    if [ -f /opt/studio/logs/tony_scott_research.pid ]; then
-        OLD_PID=\$(cat /opt/studio/logs/tony_scott_research.pid)
+    if [ -f $REMOTE_DIR/logs/tony_scott_research.pid ]; then
+        OLD_PID=\$(cat $REMOTE_DIR/logs/tony_scott_research.pid)
         kill \$OLD_PID 2>/dev/null && echo 'Stopped previous daemon (PID '\$OLD_PID')'
-        rm -f /opt/studio/logs/tony_scott_research.pid
+        rm -f $REMOTE_DIR/logs/tony_scott_research.pid
     fi
 
     echo ''
     echo '=== Starting research daemon ==='
+    cd $REMOTE_DIR
     nohup $PYTHON -m movie.tony_scott.research_loop \
         --interval 2700 \
-        > /opt/studio/logs/tony_scott_research.log 2>&1 &
+        > $REMOTE_DIR/logs/tony_scott_research.log 2>&1 &
 
+    echo \$! > $REMOTE_DIR/logs/tony_scott_research.pid
     sleep 2
-    if [ -f /opt/studio/logs/tony_scott_research.pid ]; then
-        echo 'Daemon started. PID: '\$(cat /opt/studio/logs/tony_scott_research.pid)
-    else
-        echo 'Daemon may have started. Check the log.'
-    fi
-    echo 'Log: /opt/studio/logs/tony_scott_research.log'
+    echo 'Daemon started. PID: '\$(cat $REMOTE_DIR/logs/tony_scott_research.pid)
+    echo 'Log: $REMOTE_DIR/logs/tony_scott_research.log'
 "
 
 echo ""
 echo "=== Done. Monitor with: ==="
-echo "  ssh $SERVER tail -f /opt/studio/logs/tony_scott_research.log"
+echo "  ssh $SERVER 'tail -f ~/projects/studio/logs/tony_scott_research.log'"
