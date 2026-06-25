@@ -35,7 +35,7 @@ face_swap:
   detector_model: buffalo_l          # InsightFace detection model
   swapper_model: inswapper_128.onnx  # place in models/face_swap/
   blend_alpha: 0.95                  # opacity of swapped face (0–1)
-  enhance_face: true                 # run GFPGAN post-enhance
+  enhance_face: false                # disabled on Arm64 (gfpgan/basicsr no arm64 wheel)
   enhancer_model: GFPGANv1.4.pth    # place in models/enhancers/
 
 # ── Talking Head (News Anchor Synthesis) ──────────────────────────────────────
@@ -49,7 +49,7 @@ talking_head:
       checkpoint: models/wav2lip/wav2lip_gan.pth
   still_mode: false        # reduce head motion for formal anchor look
   preprocess: crop         # crop | resize | full
-  face_enhancer: gfpgan
+  face_enhancer: none                # disabled on Arm64 (see face_swap.enhance_face)
 
 # ── Web Server ────────────────────────────────────────────────────────────────
 web:

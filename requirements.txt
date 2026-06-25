@@ -2,7 +2,7 @@
 torch>=2.2.0
 torchvision>=0.17.0
 torchaudio>=2.2.0
-xformers>=0.0.25
+# xformers removed — no arm64 wheel; GB10 has 96GB unified memory so not needed
 
 # Diffusion / generation
 diffusers>=0.27.0
@@ -14,7 +14,7 @@ omegaconf>=2.3.0
 
 # Face detection / swap
 insightface>=0.7.3
-onnxruntime-gpu>=1.17.0
+onnxruntime>=1.17.0   # cpu-only build — arm64 compatible; swap for onnxruntime-gpu if NVIDIA releases arm64 wheel
 
 # Vision / video
 opencv-python>=4.9.0

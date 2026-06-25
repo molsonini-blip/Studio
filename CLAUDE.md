@@ -1,31 +1,72 @@
-# Studio — AI News Anchor Video Platform
+# Studio — AI Content Production Platform
 
 ## What this project is
-Fully automated AI news anchor system: fetches live headlines, rewrites them to broadcast standard, generates TTS audio via ElevenLabs, animates a synthetic anchor portrait with SadTalker lip-sync, and burns in a lower-third graphic overlay.
+A multi-division AI content production platform. Each division has its own Ollama-powered
+idea generator and production pipeline.
+
+**Divisions:**
+- **News Anchor** — automated AI anchor: RSS → Ollama → TTS → lip-sync video
+- **Music** — soundtrack & song ideas by genre → audio generation pipeline
+- **Books** — romance series generator → chapter writer → EPUB/PDF
+- **Shorts** — YouTube/social short-form content (AngryACGuy HVAC channel)
+- **Movie** — Hollywood-style film production (Jim Hall documentary project)
 
 ## Project root
-`C:\Users\olson\OneDrive\Documents\Studio` (OneDrive — syncs across machines)
+`C:\Users\molson\OneDrive\Documents\AI Projects\Studio` (OneDrive — syncs across machines)
 
 ## Architecture
 ```
+shared/
+  ollama.py       # shared Ollama client — all pipelines import from here
+
+music/
+  ideas.py        # Ollama idea generator — soundtracks + all genres
+  pipeline.py     # audio generation scaffold (Suno/Udio/MusicGen TBD)
+  genres/         # soundtracks/, rock/, country/, hip_hop/, electronic/, jazz/, classical/, pop/
+  projects/       # saved idea JSON files
+
+books/
+  romance/
+    ideas.py            # Ollama series/book concept generator (20-book series)
+    chapter_generator.py # full chapter writer — resumes on interrupt
+    epub_builder.py     # assembles EPUB or PDF from generated chapters
+    series/             # series concept JSON files
+    output/             # generated chapters + final EPUBs/PDFs
+
+shorts/
+  angry_ac_guy/
+    ideas.py        # Ollama episode idea generator
+    pipeline.py     # script → TTS → video scaffold
+    episodes/       # episode idea batches + produced episode folders
+
+movie/
+  jim_hall/
+    pipeline.py     # full Jim Hall movie pipeline (was scripts/jim_hall_movie.py)
+    render_gpu.py   # RunPod GPU render (was scripts/jim_hall_render_gpu.py)
+    scenes.py       # 24-scene screenplay
+    narrator.py     # Ollama narration refinement
+    producer.py     # production coordinator
+    renderer.py     # image/video renderer
+  ideas.py          # Ollama movie concept generator
+  projects/         # movie concept JSON files
+
+news_anchor (existing):
 core/
   news/           # RSS/API fetcher, Ollama bias-filter, SRT formatter
-  pipelines/      # video_gen, face_swap, talking_head (SadTalker/Wav2Lip)
+  pipelines/      # video_gen, face_swap, talking_head (MuseTalk)
   processing/     # video frame I/O, lower-third compositing
   training/       # archive.org scraper, Whisper transcriber, dataset preparer
   models/         # ModelManager singleton
-web/              # FastAPI server (deployed to StatsDBServer01)
+web/              # FastAPI server (deployed to EdgeExpert)
 desktop/          # PySide6 desktop app
 scripts/
   anchors/        # generate_portraits.py, setup_voices.py, preview_anchor.py
-  training/       # collect_data.py, train_llm.py, train_talking_head.py
   runpod/         # sync_to_pod.sh, setup.sh, render.sh, sync_from_pod.sh
-  download_models.py
 data/anchors/
-  roster.json     # single source of truth — 12 anchors with voice IDs + prompts
-  portraits/      # {anchor_id}.png = final; {anchor_id}_candidate_N.png = drafts
+  roster.json     # single source of truth — 12 anchors
+  portraits/      # {anchor_id}.png
   voices/         # {anchor_id}_preview.mp3
-  previews/       # {anchor_id}_preview.mp4 (SadTalker) or _static_preview.mp4
+  previews/       # {anchor_id}_preview.mp4
 config/settings.yaml
 ```
 
@@ -48,8 +89,8 @@ All portraits picked, all ElevenLabs voices created and confirmed.
 | Layla Hassan | layla_hassan | 9iwoMQHIipOzhwuhtndH |
 
 ## Infrastructure
-- **CPU server**: StatsDBServer01, 162.251.146.56, Ubuntu, `/opt/studio/`
-  - SSH: `ssh -i ~/.ssh/ffl_server root@162.251.146.56`
+- **CPU server**: EdgeExpert, Ubuntu, `/opt/studio/`
+  - SSH: `ssh edgeexpert` (update ~/.ssh/config with actual IP/key as needed)
   - Running: FastAPI (uvicorn, port 8000), Ollama (llama3.2:3b)
 - **GPU**: RunPod (rent as needed — RTX 4090 or A10G, ~$0.39–0.74/hr)
   - Workflow: `sync_to_pod.sh` → `setup.sh` → `render.sh` → `sync_from_pod.sh`
@@ -80,12 +121,53 @@ python scripts/anchors/preview_anchor.py --status
 uvicorn web.main:app --host 0.0.0.0 --port 8000
 ```
 
-## Current state (as of 2026-05-22)
-- All 12 portraits: **picked** (final PNGs exist)
-- All 12 voices: **created** (ElevenLabs voice IDs in roster.json, preview MP3s exist)
-- Previews (lip-synced MP4s): **not yet rendered** on this machine
-  - May exist on another computer or RunPod from a prior session
-  - Check `data/anchors/previews/` — if empty, run RunPod workflow above
+## Common commands
+```bash
+# --- MUSIC ---
+# Generate 5 soundtrack ideas
+python -m music.ideas --genre soundtracks --context "gritty 1970s detective thriller" --count 5
 
-## Next milestone
-Render all 12 anchor preview clips → review → wire up live news pipeline end-to-end.
+# Generate full soundtrack brief
+python -m music.ideas --soundtrack --context "World War II drama" --save my_wwii_film
+
+# --- BOOKS ---
+# Generate a 20-book romance series
+python -m books.romance.ideas --series --theme "small-town firefighters" --save firefighter_series
+
+# Write all chapters for book 1
+python -m books.romance.chapter_generator --series books/romance/series/firefighter_series.json --book 1
+
+# Build EPUB
+python -m books.romance.epub_builder --series books/romance/series/firefighter_series.json --book 1
+
+# --- SHORTS (AngryACGuy) ---
+# Generate episode ideas
+python -m shorts.angry_ac_guy.ideas --count 5 --save batch_01
+
+# Run episode pipeline
+python -m shorts.angry_ac_guy.pipeline --episode shorts/angry_ac_guy/episodes/batch_01.json
+
+# --- MOVIE ---
+# Generate new movie concepts
+python -m movie.ideas --genre drama --count 3
+
+# Jim Hall pipeline (on CPU server)
+python movie/jim_hall/pipeline.py
+
+# --- NEWS ANCHOR (original) ---
+python scripts/anchors/preview_anchor.py --anchor marcus_webb --static
+uvicorn web.main:app --host 0.0.0.0 --port 8000
+```
+
+## Current state (as of 2026-06-24)
+- **News anchor**: 12 portraits + voices done; previews not yet rendered
+- **Music**: ideas.py + pipeline scaffold built; audio tool (Suno/Udio/MusicGen) not yet wired in
+- **Books**: romance pipeline built (ideas → chapters → EPUB); no series started yet
+- **Shorts**: AngryACGuy ideas + pipeline scaffold built; TTS/video not yet wired in
+- **Movie**: Jim Hall files consolidated to movie/jim_hall/; pipeline intact
+
+## Next milestones
+1. Pick a music audio backend (Suno API, Udio, or local MusicGen) and wire into music/pipeline.py
+2. Generate first romance series concept and write Book 1
+3. Generate first AngryACGuy episode batch and produce Episode 1
+4. Render 12 news anchor preview clips on RunPod

@@ -92,11 +92,24 @@ class RunPodManager:
 
     # ── Pod lifecycle ──────────────────────────────────────────────────────────
 
-    def create_pod(self) -> str:
+    def create_pod(self, allow_community: bool = True) -> str:
         last_err = None
+        # Try each GPU type in both secure and community cloud
+        attempts = []
         for gpu in self.gpu_types:
+            attempts.append((gpu, False))  # secure cloud first
+            if allow_community:
+                attempts.append((gpu, True))  # then community cloud
+
+        seen = set()
+        for gpu, community in attempts:
+            key = (gpu, community)
+            if key in seen:
+                continue
+            seen.add(key)
+            cloud_label = "community" if community else "secure"
             try:
-                print(f"[runpod] Trying GPU: {gpu}")
+                print(f"[runpod] Trying {gpu} ({cloud_label} cloud)...")
                 data = _gql(
                     CREATE_POD_MUTATION,
                     {
@@ -110,17 +123,18 @@ class RunPodManager:
                             "supportPublicIp": True,
                             "startJupyter": False,
                             "startSsh": True,
+                            "cloudType": "COMMUNITY" if community else "SECURE",
                         }
                     },
                     self.api_key,
                 )
                 self.pod_id = data["podFindAndDeployOnDemand"]["id"]
                 self.gpu_type = gpu
-                print(f"[runpod] Pod created ({gpu}): {self.pod_id}")
+                print(f"[runpod] Pod created ({gpu}, {cloud_label}): {self.pod_id}")
                 return self.pod_id
             except RuntimeError as e:
-                if "SUPPLY_CONSTRAINT" in str(e) or "no longer any instances" in str(e):
-                    print(f"[runpod] {gpu} unavailable, trying next...")
+                if "SUPPLY_CONSTRAINT" in str(e) or "no longer any instances" in str(e) or "GRAPHQL_VALIDATION_FAILED" in str(e):
+                    print(f"[runpod]   unavailable, trying next...")
                     last_err = e
                 else:
                     raise

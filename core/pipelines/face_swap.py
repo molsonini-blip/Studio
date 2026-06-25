@@ -52,8 +52,13 @@ class FaceSwapPipeline(BasePipeline):
         from insightface.app import FaceAnalysis
 
         cfg = _cfg()
-        self._app = FaceAnalysis(name=cfg["detector_model"], providers=["CUDAExecutionProvider", "CPUExecutionProvider"])
-        self._app.prepare(ctx_id=0 if manager.device.type == "cuda" else -1, det_size=(640, 640))
+        # GB10 Grace Blackwell (Arm64): onnxruntime-gpu has no arm64 wheel so we
+        # use onnxruntime (CPU) with CPUExecutionProvider. Face swap still works,
+        # just runs on CPU. Switch back to CUDAExecutionProvider if NVIDIA releases
+        # an arm64 onnxruntime-gpu wheel for the DGX Spark platform.
+        providers = ["CPUExecutionProvider"]
+        self._app = FaceAnalysis(name=cfg["detector_model"], providers=providers)
+        self._app.prepare(ctx_id=-1, det_size=(640, 640))
 
         swapper_path = manager.model_path("face_swap", cfg["swapper_model"])
         if not swapper_path.exists():
@@ -61,8 +66,8 @@ class FaceSwapPipeline(BasePipeline):
                 f"Swapper model not found: {swapper_path}\n"
                 "Run scripts/download_models.py to download it."
             )
-        self._swapper = insightface.model_zoo.get_model(str(swapper_path), providers=["CUDAExecutionProvider", "CPUExecutionProvider"])
-        self._swapper.prepare(ctx_id=0 if manager.device.type == "cuda" else -1)
+        self._swapper = insightface.model_zoo.get_model(str(swapper_path), providers=providers)
+        self._swapper.prepare(ctx_id=-1)
 
         if cfg.get("enhance_face"):
             self._load_enhancer(cfg)
