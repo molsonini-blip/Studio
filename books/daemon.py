@@ -38,6 +38,7 @@ from books.genres.definitions import GENRES
 from books.series_generator import generate_series, save_series, load_prior_series, SeriesBible
 from books.chapter_writer import write_book
 from books.epub_writer import build_epub
+from books.screenplay import adapt_book
 
 BOOKS_DIR = ROOT / "books" / "output"
 LOGS_DIR = ROOT / "logs"
@@ -145,6 +146,10 @@ def produce_book(series: SeriesBible, book_entry, genre_name: str, series_dir: P
             book_dir=book_dir,
         )
         log(f"    ✓ EPUB: {epub_path.name}")
+
+        # Screenplay adaptation (ratio depends on genre + spy detection)
+        adapt_book(series_dir, book_entry.number, genre_name, log_fn=log)
+
         return True
 
     except Exception as e:
