@@ -89,11 +89,14 @@ All portraits picked, all ElevenLabs voices created and confirmed.
 | Layla Hassan | layla_hassan | 9iwoMQHIipOzhwuhtndH |
 
 ## Infrastructure
-- **CPU server**: EdgeExpert, Ubuntu, `/opt/studio/`
-  - SSH: `ssh edgeexpert` (update ~/.ssh/config with actual IP/key as needed)
-  - Running: FastAPI (uvicorn, port 8000), Ollama (llama3.2:3b)
-- **GPU**: RunPod (rent as needed — RTX 4090 or A10G, ~$0.39–0.74/hr)
-  - Workflow: `sync_to_pod.sh` → `setup.sh` → `render.sh` → `sync_from_pod.sh`
+- **EdgeExpert** (MSI EdgeXpert — all execution happens here, NOTHING runs locally on Windows)
+  - Hostname: edgexpert-672f | Tailscale: 100.86.243.19 | LAN: 10.0.0.39
+  - OS: DGX OS / Ubuntu 24.04 Arm64 | RAM: 121 GB | Storage: 3.7 TB
+  - GPU: NVIDIA GB10 Grace Blackwell (built-in — RunPod not needed for GPU work)
+  - SSH: `ssh edgeexpert` → uses ~/.ssh/id_ed25519, user molson
+  - Projects: `/home/molson/projects/studio/` | Venv: `venv/` | Logs: `logs/`
+  - Running: Ollama (llama3.2:3b, localhost:11434), Tony Scott research daemon
+- **RunPod**: Available if needed for additional GPU burst (RTX 4090 / A10G)
 - **ElevenLabs**: Creator plan, 30 voice slots, 100K chars/month
 
 ## Key env vars
